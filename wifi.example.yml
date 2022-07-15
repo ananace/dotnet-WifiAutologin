@@ -70,6 +70,11 @@ CaptiveNetwork:
     # Wait for DOM to settle
     - action: settle
 
+  # Steps necessary to discover the available data amount on the network
+  # Specified regexes will be matched against the element text, and are expected to capture at least one of avail_mb or used_mb and total_mb
+  data:
+    - '#networkInfo': '(?<avail_mb>\S+)MB remaining'
+
   # Network-specific hooks
   hooks:
     login:
