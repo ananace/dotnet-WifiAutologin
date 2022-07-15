@@ -1,0 +1,6 @@
+[Unit]
+Description=WifiAutologin daemon
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/WifiAutologin -d
