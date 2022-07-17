@@ -270,16 +270,29 @@ public class Config
     }
 
 
+    static DateTime LastWrite;
+    static bool ReloadNecessary()
+    {
+        return File.GetLastWriteTimeUtc(ConfigPath) > LastWrite;
+    }
+
     public static string ConfigPath => Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "wifi.yml");
 
     static Config? _instance = null;
     public static Config Instance { get {
+        if (ReloadNecessary())
+        {
+            Logger.Info("Configuration change detected, reloading.");
+            _instance = null;
+        }
+
         if (_instance == null)
         {
             _instance = new Config();
 
             Logger.Info($"Loading configuration from {ConfigPath}...");
 
+            LastWrite = File.GetLastWriteTimeUtc(ConfigPath);
             using (var input = File.OpenRead(ConfigPath))
             using (var reader = new StreamReader(input))
             {
