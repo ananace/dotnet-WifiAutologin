@@ -3,4 +3,9 @@ Description=WifiAutologin daemon
 PartOf=graphical-session.target
 
 [Service]
+# If you have your runners in a non-standard directory
+# Environment=PATH=/home/user/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ExecStart=/usr/bin/WifiAutologin -d
+
+[Install]
+WantedBy=default.target

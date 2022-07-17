@@ -4,10 +4,13 @@ namespace WifiAutologin.Interfaces;
 
 public class Daemon : IInterface
 {
+    bool SkipConnectionCheck = false;
     static ILogger Logger { get; } = WifiAutologin.Logger.Global[typeof(Daemon)];
 
     public void Run(Program.Options Args)
     {
+        SkipConnectionCheck = Args.SkipConnectionCheck;
+
         var backend = BackendFactory.CreateDaemonBackend();
         if (backend == null)
         {
@@ -46,7 +49,7 @@ public class Daemon : IInterface
                 continue;
             }
 
-            if (!Program.NeedsLogin(network))
+            if (!SkipConnectionCheck && !Program.NeedsLogin(network))
             {
                 Logger.Info("No login required, ignoring");
                 continue;
