@@ -1,0 +1,35 @@
+---
+name: .NET
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        publish-version: [ 'linux-x64' ]
+        dotnet-version: [ '6.0' ]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: ${{ matrix.dotnet-version }}
+      - name: Install deps
+        run: dotnet restore
+      - name: Build ${{ matrix.publish-version }}
+        run: dotnet publish -r ${{ matrix.publish-version }} -c Release -o publish --sc
+      - name: Upload dotnet test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: publish-net${{ matrix.dotnet-version }}-${{ matrix.dotnet-version }}
+          path: publish/

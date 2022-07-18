@@ -32,4 +32,8 @@
     <Content Include="Linux/wifi-autologin.service" />
   </ItemGroup>
 
+  <Target Name="CopyCustomContentOnPublish" AfterTargets="Publish" Condition="'$(OS)' == 'UNIX'">
+    <Copy SourceFiles="Linux/wifi-autologin.service" DestinationFolder="$(PublishDir)" />
+  </Target>
+
 </Project>
