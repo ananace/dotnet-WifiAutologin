@@ -202,8 +202,16 @@ public class WebDriver : IDisposable
                 {
                     Thread.Sleep(250);
 
-                    if ((bool)Driver.ExecuteScript("document.readyState === 'complete'") || DateTime.Now > endTime)
+                    try
+                    {
+                        if ((bool)(Driver.ExecuteScript("document.readyState === 'complete'")) || DateTime.Now > endTime)
+                            break;
+                    }
+                    catch (System.NullReferenceException)
+                    {
+                        // TODO figure out what's going on here
                         break;
+                    }
                 } while(true);
                 break;
         }
