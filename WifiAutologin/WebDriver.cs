@@ -15,9 +15,10 @@ public class WebDriver : IDisposable
         Driver = CreateWebDriver(network.Driver ?? Config.NetworkDriver.Automatic);
     }
 
+    static string FallbackUrl = "http://example.com";
     public void Login()
     {
-        var url = Network.URL ?? Config.Instance.Fallback.URL ?? "http://example.com";
+        var url = Network.URL ?? Config.Instance.Fallback.URL ?? FallbackUrl;
         Logger.Debug($"Navigating to {url}");
         try
         {
@@ -29,6 +30,13 @@ public class WebDriver : IDisposable
             WebDrivers.Clear();
             Driver = CreateWebDriver(Network.Driver ?? Config.NetworkDriver.Automatic);
             Driver.Navigate().GoToUrl(url);
+        }
+
+        // Apparently the network is actually logged in
+        if (Driver.Url == FallbackUrl)
+        {
+            Logger.Info("Navigation to fallback URL succeeded, assuming working network.");
+            return;
         }
 
         foreach (var action in Network.LoginActions)
@@ -62,11 +70,14 @@ public class WebDriver : IDisposable
         ActOnPage(new Config.NetworkAction { Action = Config.NetworkActionType.Settle }, DateTime.Now);
     }
 
-    public NetworkData ReadData()
+    public NetworkData? ReadData()
     {
         var data = new NetworkData();
 
-        var url = Network.URL ?? Config.Instance.Fallback.URL ?? "http://example.com";
+        var url = Network.URL ?? Config.Instance.Fallback.URL;
+        if (url == null)
+            return null;
+
         Logger.Debug($"Navigating to {url}");
         try
         {

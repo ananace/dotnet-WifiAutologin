@@ -119,7 +119,7 @@ public class Program
         }
     }
 
-    public static void Login(Config.NetworkConfig network, bool login = true, bool data = false)
+    public static void Login(Config.NetworkConfig network, bool login = true)
     {
         try
         {
@@ -148,8 +148,43 @@ public class Program
                 }
             }
 
-            if (data)
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex.ToString());
+
+            var environment = new Dictionary<string, string>{
+                { "ERROR", ex.ToString() }
+            };
+            HookRunner.RunHooks(network, HookType.Error, environment);
+            ExitCode = 1;
+        }
+    }
+
+    public static void ReadData(Config.NetworkConfig network)
+    {
+        try
+        {
+            using(var driver = new WebDriver(network))
             {
+                var data = driver.ReadData();
+                if (data == null)
+                {
+                    Logger.Info("No data information for network, skipping.");
+                    return;
+                }
+
+                var environment = new Dictionary<string, string>();
+                if (data.IsInfinite)
+                    environment["DATA_INFINITE"] = "1";
+                else
+                {
+                    environment["DATA_AVAILABLE"] = data.GetAvailableMB().ToString();
+                    if (data.UsedMB.HasValue)
+                        environment["DATA_USED"] = data.UsedMB.Value.ToString();
+                    if (data.TotalMB.HasValue)
+                        environment["DATA_TOTAL"] = data.TotalMB.Value.ToString();
+                }
                 HookRunner.RunHooks(network, HookType.Data);
             }
         }

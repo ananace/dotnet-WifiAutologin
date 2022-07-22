@@ -16,6 +16,10 @@ public class NetworkData
         if (UsedMB.HasValue && TotalMB.HasValue)
             return TotalMB.Value - UsedMB.Value;
 
+        // Probably needs a way for a user to notice if this is hit
+        if (TotalMB.HasValue)
+            return TotalMB.Value;
+
         return ulong.MaxValue;
     }
 }

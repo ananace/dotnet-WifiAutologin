@@ -41,8 +41,11 @@ public class Interactive : IInterface
         }
 
         if (result.SkipConnectionCheck || Program.NeedsLogin(network))
-            Program.Login(network, result.Login, result.ReadData);
-        else
+            Program.Login(network, result.Login);
+        else if (result.Login)
             Logger.Info("No login necessary, skipping.");
+
+        if (result.ReadData)
+            Program.ReadData(network);
     }
 }
