@@ -119,32 +119,29 @@ public class Program
         }
     }
 
-    public static void Login(Config.NetworkConfig network, bool login = true)
+    public static void Login(Config.NetworkConfig network)
     {
         try
         {
-            if (login)
+            Logger.Info($"Logging in to {network.SSID}...");
+
+            HookRunner.RunHooks(network, HookType.PreLogin);
+
+            using(var driver = new WebDriver(network))
             {
-                Logger.Info($"Logging in to {network.SSID}...");
+                driver.Login();
 
-                HookRunner.RunHooks(network, HookType.PreLogin);
-
-                using(var driver = new WebDriver(network))
+                // Allow driver to live during the connection check, for any delayed action by the login
+                if (Program.ConnectionCheck())
+                    HookRunner.RunHooks(network, HookType.Login);
+                else
                 {
-                    driver.Login();
-
-                    // Allow driver to live during the connection check, for any delayed action by the login
-                    if (Program.ConnectionCheck())
-                        HookRunner.RunHooks(network, HookType.Login);
-                    else
-                    {
-                        var environment = new Dictionary<string, string>{
-                            { "ERROR", "Unable to verify connection after login" }
-                        };
-                        HookRunner.RunHooks(network, HookType.Error, environment);
-                        ExitCode = 1;
-                        return;
-                    }
+                    var environment = new Dictionary<string, string>{
+                        { "ERROR", "Unable to verify connection after login" }
+                    };
+                    HookRunner.RunHooks(network, HookType.Error, environment);
+                    ExitCode = 1;
+                    return;
                 }
             }
 
