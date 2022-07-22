@@ -57,6 +57,9 @@ public class WebDriver : IDisposable
                 break;
             }
         }
+
+        Logger.Debug("Allowing page to settle after login...");
+        ActOnPage(new Config.NetworkAction { Action = Config.NetworkActionType.Settle }, DateTime.Now);
     }
 
     public NetworkData ReadData()

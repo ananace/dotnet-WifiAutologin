@@ -122,19 +122,19 @@ public class Config
     public class NetworkAction
     {
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public NetworkActionType? Action { get; private set; }
+        public NetworkActionType? Action { get; set; }
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public string? Element { get; private set; }
+        public string? Element { get; set; }
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public string? Script { get; private set; }
+        public string? Script { get; set; }
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public string? Input { get; private set; }
+        public string? Input { get; set; }
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public string? Regex { get; private set; }
+        public string? Regex { get; set; }
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public float? Sleep { get; private set; }
+        public float? Sleep { get; set; }
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public float? Timeout { get; private set; }
+        public float? Timeout { get; set; }
 
         public void LoadFromNode(YamlNode node)
         {
