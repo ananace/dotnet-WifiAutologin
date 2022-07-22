@@ -214,7 +214,7 @@ public class WebDriver : IDisposable
             case Config.NetworkActionType.Settle:
                 do
                 {
-                    Thread.Sleep(250);
+                    Thread.Sleep(500);
 
                     try
                     {
