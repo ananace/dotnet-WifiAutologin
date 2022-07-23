@@ -212,21 +212,35 @@ public class WebDriver : IDisposable
             case Config.NetworkActionType.Script: Driver.ExecuteScript(action.Script); break;
             case Config.NetworkActionType.Sleep: System.Threading.Thread.Sleep((int)((action.Sleep ?? 0.25) * 1000)); break;
             case Config.NetworkActionType.Settle:
+                string source;
+
                 do
                 {
+                    source = Driver.PageSource;
                     Thread.Sleep(500);
 
-                    try
-                    {
-                        if ((bool)(Driver.ExecuteScript("document.readyState === 'complete'")) || DateTime.Now > endTime)
-                            break;
-                    }
-                    catch (System.NullReferenceException)
-                    {
-                        // TODO figure out what's going on here
-                        break;
-                    }
-                } while(true);
+                    // Check that the DOM is ready
+                    var result = Driver.ExecuteScript("return document.readyState");
+                    if (result != null && (string)result != "complete")
+                        continue;
+
+                    // Check for active jQuery requests
+                    result = Driver.ExecuteScript("(window.jQuery || { active : 0 }).active");
+                    if (result != null && (int)result != 0)
+                        continue;
+
+                    // Check if any active requests are still outstanding
+                    if (WebDrivers.Values.First(d => d.WebDriver == Driver).ActiveRequests > 0)
+                        continue;
+
+                    // Check if DOM has modified
+                    if (Driver.PageSource != source)
+                        continue;
+
+                    // TODO: Check other things?
+
+                    break;
+                } while(DateTime.Now < endTime);
                 break;
         }
     }
@@ -260,18 +274,29 @@ public class WebDriver : IDisposable
             }
         },
     };
-    static Dictionary<Config.NetworkDriver, OpenQA.Selenium.WebDriver> WebDrivers = new Dictionary<Config.NetworkDriver, OpenQA.Selenium.WebDriver>();
+    class WebDriverStorage
+    {
+        public OpenQA.Selenium.WebDriver? WebDriver { get; set; } = null;
+        public int ActiveRequests { get; set; } = 0;
+    }
+    static Dictionary<Config.NetworkDriver, WebDriverStorage> WebDrivers = new Dictionary<Config.NetworkDriver, WebDriverStorage>();
 
     private static OpenQA.Selenium.WebDriver CreateWebDriver(Config.NetworkDriver preferred)
     {
+        OpenQA.Selenium.WebDriver? driver = null;
+
         if (preferred == Config.NetworkDriver.Automatic)
         {
             if (WebDrivers.Any(d => d.Value != null))
-                return WebDrivers.First(d => d.Value != null).Value;
+            {
+                driver = WebDrivers.Values.First(d => d != null).WebDriver;
+                if (driver == null)
+                    throw new Exception("Null driver object in storage");
+                return driver;
+            }
 
             Logger.Debug("Finding first available webdriver...");
             Config.NetworkDriver type = Config.NetworkDriver.Automatic;
-            OpenQA.Selenium.WebDriver? driver = null;
             foreach (var factory in WebDriverFactories)
             {
                 Logger.Debug($"Trying {factory.Key}");
@@ -282,7 +307,10 @@ public class WebDriver : IDisposable
                         if (WebDrivers[factory.Key] == null)
                             continue;
 
-                        return WebDrivers[factory.Key];
+                        driver = WebDrivers[factory.Key].WebDriver;
+                        if (driver == null)
+                            throw new Exception("Null driver object in storage");
+                        return driver;
                     }
 
                     driver = factory.Value();
@@ -302,22 +330,36 @@ public class WebDriver : IDisposable
 
             Logger.Debug($"Found default driver as {type}");
 
-            WebDrivers[type] = driver;
-            return driver;
+            WebDrivers[type] = new WebDriverStorage { WebDriver = driver };
         }
         else
         {
             if (WebDrivers.ContainsKey(preferred) && WebDrivers[preferred] != null)
-                return WebDrivers[preferred];
+                driver = WebDrivers[preferred].WebDriver;
+
+            if (driver != null)
+                return driver;
 
             if (!WebDriverFactories.ContainsKey(preferred))
                 return CreateWebDriver(Config.NetworkDriver.Automatic);
 
             var factory = WebDriverFactories[preferred];
-            var driver = factory();
-            WebDrivers[preferred] = driver;
-
-            return driver;
+            driver = factory();
+            WebDrivers[preferred] = new WebDriverStorage { WebDriver = driver };
         }
+
+        if (driver == null)
+            throw new Exception("Failed to create a web driver");
+
+        driver.Manage().Network.NetworkRequestSent += (ev, s) => {
+            var active = ++WebDrivers.First(d => d.Value.WebDriver == driver).Value.ActiveRequests;
+            Logger.Debug($"New request; {ev} for {s}. Currently {active} active.");
+        };
+        driver.Manage().Network.NetworkResponseReceived += (ev, s) => {
+            var active = --WebDrivers.First(d => d.Value.WebDriver == driver).Value.ActiveRequests;
+            Logger.Debug($"Request {ev} for {s} finished. Currently {active} active.");
+        };
+
+        return driver;
     }
 }
