@@ -222,20 +222,32 @@ public class WebDriver : IDisposable
                     // Check that the DOM is ready
                     var result = Driver.ExecuteScript("return document.readyState");
                     if (result != null && (string)result != "complete")
+                    {
+                        Logger.Debug("  Document readyState != complete, waiting");
                         continue;
+                    }
 
                     // Check for active jQuery requests
                     result = Driver.ExecuteScript("(window.jQuery || { active : 0 }).active");
                     if (result != null && (int)result != 0)
+                    {
+                        Logger.Debug("  Active jQuery requests, waiting");
                         continue;
+                    }
 
                     // Check if any active requests are still outstanding
                     if (WebDrivers.Values.First(d => d.WebDriver == Driver).ActiveRequests > 0)
+                    {
+                        Logger.Debug("  Active WebDriver requests, waiting");
                         continue;
+                    }
 
                     // Check if DOM has modified
                     if (Driver.PageSource != source)
+                    {
+                        Logger.Debug("  DOM modified since last check, waiting");
                         continue;
+                    }
 
                     // TODO: Check other things?
 
@@ -243,6 +255,11 @@ public class WebDriver : IDisposable
                 } while(DateTime.Now < endTime);
                 break;
         }
+
+        if (DateTime.Now > endTime)
+            Logger.Debug("Settle attempt timed out, continuing.");
+        else
+            Logger.Debug("Page has settled, continuing.");
     }
 
 
