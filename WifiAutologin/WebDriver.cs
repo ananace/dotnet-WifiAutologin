@@ -195,7 +195,7 @@ public class WebDriver : IDisposable
                     throw ex;
 
                 var newElement = FindElement(action, start);
-                if (DateTime.Now > endTime || newElement == null)
+                if (DateTime.Now > endTime)
                     throw ex;
 
                 element = newElement;
