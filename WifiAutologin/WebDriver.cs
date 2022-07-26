@@ -18,6 +18,8 @@ public class WebDriver : IDisposable
     static string FallbackUrl = "http://example.com";
     public void Login()
     {
+        WebDrivers.First(d => d.Value.WebDriver == Driver).Value.ActiveRequests = 0;
+
         var url = Network.URL ?? Config.Instance.Fallback.URL ?? FallbackUrl;
         Logger.Debug($"Navigating to {url}");
         try
@@ -72,6 +74,8 @@ public class WebDriver : IDisposable
 
     public NetworkData? ReadData()
     {
+        WebDrivers.First(d => d.Value.WebDriver == Driver).Value.ActiveRequests = 0;
+
         var data = new NetworkData();
 
         var url = Network.URL ?? Config.Instance.Fallback.URL;
@@ -224,14 +228,6 @@ public class WebDriver : IDisposable
                     if (result != null && (string)result != "complete")
                     {
                         Logger.Debug("  Document readyState != complete, waiting");
-                        continue;
-                    }
-
-                    // Check for active jQuery requests
-                    result = Driver.ExecuteScript("(window.jQuery || { active : 0 }).active");
-                    if (result != null && (int)result != 0)
-                    {
-                        Logger.Debug("  Active jQuery requests, waiting");
                         continue;
                     }
 
