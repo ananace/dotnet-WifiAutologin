@@ -69,7 +69,7 @@ public class WebDriver : IDisposable
         }
 
         Logger.Debug("Allowing page to settle after login...");
-        ActOnPage(new Config.NetworkAction { Action = Config.NetworkActionType.Settle }, DateTime.Now);
+        ActOnPage(new Config.NetworkAction { Action = Config.NetworkActionType.Settle });
     }
 
     public NetworkData? ReadData()
@@ -143,10 +143,11 @@ public class WebDriver : IDisposable
         Driver.Close();
     }
 
-    OpenQA.Selenium.IWebElement? FindElement(Config.NetworkAction action, DateTime start)
+    OpenQA.Selenium.IWebElement? FindElement(Config.NetworkAction action, DateTime? start = null)
     {
         var element = action.Element;
-        var endTime = start + TimeSpan.FromSeconds(action.Timeout ?? 5);
+        var startTime = start ?? DateTime.Now;
+        var endTime = startTime + TimeSpan.FromSeconds(action.Timeout ?? 5);
 
         do
         {
@@ -169,8 +170,9 @@ public class WebDriver : IDisposable
         return null;
     }
 
-    void ActOnElement(ref OpenQA.Selenium.IWebElement element, Config.NetworkAction action, DateTime start)
+    void ActOnElement(ref OpenQA.Selenium.IWebElement element, Config.NetworkAction action, DateTime? startTime = null)
     {
+        var start = startTime ?? DateTime.Now;
         var endTime = start + TimeSpan.FromSeconds(action.Timeout ?? 5);
 
         do
@@ -207,8 +209,9 @@ public class WebDriver : IDisposable
         } while(DateTime.Now <= endTime);
     }
 
-    void ActOnPage(Config.NetworkAction action, DateTime start)
+    void ActOnPage(Config.NetworkAction action, DateTime? startTime = null)
     {
+        var start = startTime ?? DateTime.Now;
         var endTime = start + TimeSpan.FromSeconds(action.Timeout ?? 5);
 
         switch (action.Action)
