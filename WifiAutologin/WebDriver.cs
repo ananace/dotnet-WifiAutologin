@@ -143,9 +143,8 @@ public class WebDriver : IDisposable
         Driver.Close();
     }
 
-    OpenQA.Selenium.IWebElement? FindElement(Config.NetworkAction action, DateTime? start = null)
+    OpenQA.Selenium.IWebElement FindElement(Config.NetworkAction action, DateTime? start = null)
     {
-        var element = action.Element;
         var startTime = start ?? DateTime.Now;
         var endTime = startTime + TimeSpan.FromSeconds(action.Timeout ?? 5);
 
@@ -153,7 +152,7 @@ public class WebDriver : IDisposable
         {
             try
             {
-                return Driver.FindElement(OpenQA.Selenium.By.CssSelector(element));
+                return Driver.FindElement(OpenQA.Selenium.By.CssSelector(action.Element));
             }
             catch (OpenQA.Selenium.NoSuchElementException ex)
             {
@@ -162,12 +161,7 @@ public class WebDriver : IDisposable
                 else
                     System.Threading.Thread.Sleep(100);
             }
-        } while (element == null && DateTime.Now <= endTime);
-
-        if (element == null)
-            throw new Exception($"Failed to find element {element}");
-
-        return null;
+        } while (true);
     }
 
     void ActOnElement(ref OpenQA.Selenium.IWebElement element, Config.NetworkAction action, DateTime? startTime = null)
