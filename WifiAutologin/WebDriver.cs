@@ -246,15 +246,15 @@ public class WebDriver : IDisposable
 
                     break;
                 } while(DateTime.Now < endTime);
+
+                if (DateTime.Now > endTime)
+                    Logger.Debug("Settle attempt timed out, continuing.");
+                else
+                    Logger.Debug("Page has settled, continuing.");
+
                 break;
         }
-
-        if (DateTime.Now > endTime)
-            Logger.Debug("Settle attempt timed out, continuing.");
-        else
-            Logger.Debug("Page has settled, continuing.");
     }
-
 
     static Dictionary<Config.NetworkDriver, Func<OpenQA.Selenium.WebDriver>> WebDriverFactories = new Dictionary<Config.NetworkDriver, Func<OpenQA.Selenium.WebDriver>>{
         //{ Config.NetworkDriver.PhantomJS, () => new OpenQA.Selenium.PhantomJS.PhantomJSDriver() },
