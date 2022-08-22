@@ -125,7 +125,7 @@ public class Program
         {
             Logger.Info($"Logging in to {network.SSID}...");
 
-            HookRunner.RunHooks(network, HookType.PreLogin);
+            HookRunner.RunHooks(network, HookType.PreLogin, Config.NetworkHook.OnlyWhen.Always);
 
             using(var driver = new WebDriver(network))
             {
@@ -133,13 +133,14 @@ public class Program
 
                 // Allow driver to live during the connection check, for any delayed action by the login
                 if (Program.ConnectionCheck())
-                    HookRunner.RunHooks(network, HookType.Login);
+                    HookRunner.RunHooks(network, HookType.Login, Config.NetworkHook.OnlyWhen.Success);
                 else
                 {
                     var environment = new Dictionary<string, string>{
                         { "ERROR", "Unable to verify connection after login" }
                     };
-                    HookRunner.RunHooks(network, HookType.Error, environment);
+                    HookRunner.RunHooks(network, HookType.Login, Config.NetworkHook.OnlyWhen.Failure, environment);
+                    HookRunner.RunHooks(network, HookType.Error, Config.NetworkHook.OnlyWhen.Always, environment);
                     ExitCode = 1;
                     return;
                 }
@@ -153,7 +154,8 @@ public class Program
             var environment = new Dictionary<string, string>{
                 { "ERROR", ex.ToString() }
             };
-            HookRunner.RunHooks(network, HookType.Error, environment);
+            HookRunner.RunHooks(network, HookType.Login, Config.NetworkHook.OnlyWhen.Failure, environment);
+            HookRunner.RunHooks(network, HookType.Error, Config.NetworkHook.OnlyWhen.Always, environment);
             ExitCode = 1;
         }
     }
@@ -182,7 +184,7 @@ public class Program
                     if (data.TotalMB.HasValue)
                         environment["DATA_TOTAL"] = data.TotalMB.Value.ToString();
                 }
-                HookRunner.RunHooks(network, HookType.Data);
+                HookRunner.RunHooks(network, HookType.Data, Config.NetworkHook.OnlyWhen.Success);
             }
         }
         catch (Exception ex)
@@ -192,7 +194,8 @@ public class Program
             var environment = new Dictionary<string, string>{
                 { "ERROR", ex.ToString() }
             };
-            HookRunner.RunHooks(network, HookType.Error, environment);
+            HookRunner.RunHooks(network, HookType.Data, Config.NetworkHook.OnlyWhen.Failure);
+            HookRunner.RunHooks(network, HookType.Error, Config.NetworkHook.OnlyWhen.Always, environment);
             ExitCode = 1;
         }
     }

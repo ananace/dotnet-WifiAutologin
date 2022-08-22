@@ -24,9 +24,17 @@ public class Config
 
     public class NetworkHook
     {
+        public enum OnlyWhen {
+            Success,
+            Failure,
+            Always
+        }
+
         public string Hook { get; private set; } = "";
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string? Unless { get; private set; }
+        [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitDefaults)]
+        public OnlyWhen When { get; private set; } = OnlyWhen.Success;
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string? If { get; private set; }
         [YamlMember(Alias = "final", DefaultValuesHandling = DefaultValuesHandling.OmitDefaults)]
@@ -37,6 +45,10 @@ public class Config
             if (node is YamlMappingNode mapping)
             {
                 Hook = mapping.Children[new YamlScalarNode("hook")].ToString();
+                if (mapping.Children.ContainsKey(new YamlScalarNode("when")))
+                    When = Enum.Parse<OnlyWhen>(mapping.Children[new YamlScalarNode("when")].ToString(), true);
+                else
+                    When = OnlyWhen.Success;
                 if (mapping.Children.ContainsKey(new YamlScalarNode("unless")))
                     Unless = mapping.Children[new YamlScalarNode("unless")].ToString();
                 if (mapping.Children.ContainsKey(new YamlScalarNode("if")))
@@ -47,6 +59,7 @@ public class Config
             else
             {
                 Hook = node.ToString();
+                When = OnlyWhen.Success;
             }
         }
 

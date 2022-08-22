@@ -14,7 +14,7 @@ public static class HookRunner
 {
     static ILogger Logger { get; } = WifiAutologin.Logger.Global[typeof(HookRunner)];
 
-    public static void RunHooks(Config.NetworkConfig network, HookType type, IReadOnlyDictionary<string, string>? env = null)
+    public static void RunHooks(Config.NetworkConfig network, HookType type, Config.NetworkHook.OnlyWhen only, IReadOnlyDictionary<string, string>? env = null)
     {
         IReadOnlyList<Config.NetworkHook> hooks;
         switch (type)
@@ -51,7 +51,7 @@ public static class HookRunner
         };
         env?.ToList()?.ForEach(v => environment.Add(v.Key, v.Value));
 
-        foreach (var hook in hooks)
+        foreach (var hook in hooks.Where(h => h.When == only || only == Config.NetworkHook.OnlyWhen.Always || h.When == Config.NetworkHook.OnlyWhen.Always))
         {
             if (hook.If != null)
             {
