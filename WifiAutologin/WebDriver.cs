@@ -68,8 +68,11 @@ public class WebDriver : IDisposable
             }
         }
 
-        Logger.Debug("Allowing page to settle after login...");
-        ActOnPage(new Config.NetworkAction { Action = Config.NetworkActionType.Settle });
+        Logger.Debug("Allowing page a few seconds to settle after login...");
+        ActOnPage(new Config.NetworkAction {
+          Action = Config.NetworkActionType.Settle,
+          Timeout = 2.0
+        });
     }
 
     public NetworkData? ReadData()
