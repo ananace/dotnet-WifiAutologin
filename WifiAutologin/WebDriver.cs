@@ -250,7 +250,7 @@ public class WebDriver : IDisposable
                     break;
                 } while(DateTime.Now < endTime);
 
-                if (DateTime.Now > endTime)
+                if (DateTime.Now >= endTime)
                     Logger.Debug("Settle attempt timed out, continuing.");
                 else
                     Logger.Debug("Page has settled, continuing.");
