@@ -124,24 +124,24 @@ public class WebDriver : IDisposable
                     var match = rex.Match(element.Text);
 
                     var dict = match.Groups.AsDictionary();
-                    if (dict.ContainsKey("total_kb"))
-                        data.TotalMB = double.Parse(dict["total_kb"]) / 1024;
-                    if (dict.ContainsKey("total_mb"))
-                        data.TotalMB = double.Parse(dict["total_mb"]);
-                    if (dict.ContainsKey("total_gb"))
-                        data.TotalMB = double.Parse(dict["total_gb"]) * 1024;
-                    if (dict.ContainsKey("avail_kb"))
-                        data.AvailableMB = double.Parse(dict["avail_kb"]) / 1024;
-                    if (dict.ContainsKey("avail_mb"))
-                        data.AvailableMB = double.Parse(dict["avail_mb"]);
-                    if (dict.ContainsKey("avail_gb"))
-                        data.AvailableMB = double.Parse(dict["avail_gb"]) * 1024;
-                    if (dict.ContainsKey("used_kb"))
-                        data.UsedMB = double.Parse(dict["used_kb"]) / 1024;
-                    if (dict.ContainsKey("used_mb"))
-                        data.UsedMB = double.Parse(dict["used_mb"]);
-                    if (dict.ContainsKey("used_gb"))
-                        data.UsedMB = double.Parse(dict["used_gb"]) * 1024;
+                    if (dict.ContainsKey("total_kb") && double.TryParse(dict["total_kb"], out var total_kb))
+                        data.TotalMB = total_kb / 1024;
+                    else if (dict.ContainsKey("total_mb") && double.TryParse(dict["total_mb"], out var total_mb))
+                        data.TotalMB = total_mb;
+                    else if (dict.ContainsKey("total_gb") && double.TryParse(dict["total_gb"], out var total_gb))
+                        data.TotalMB = total_gb * 1024;
+                    if (dict.ContainsKey("avail_kb") && double.TryParse(dict["avail_kb"], out var avail_kb))
+                        data.AvailableMB = avail_kb / 1024;
+                    else if (dict.ContainsKey("avail_mb") && double.TryParse(dict["avail_mb"], out var avail_mb))
+                        data.AvailableMB = avail_mb;
+                    else if (dict.ContainsKey("avail_gb") && double.TryParse(dict["avail_gb"], out var avail_gb))
+                        data.AvailableMB = avail_gb * 1024;
+                    if (dict.ContainsKey("used_kb") && double.TryParse(dict["used_kb"], out var used_kb))
+                        data.UsedMB =  used_kb / 1024;
+                    else if (dict.ContainsKey("used_mb") && double.TryParse(dict["used_mb"], out var used_mb))
+                        data.UsedMB = used_mb;
+                    else if (dict.ContainsKey("used_gb") && double.TryParse(dict["used_gb"], out var used_gb))
+                        data.UsedMB = used_gb * 1024;
                 }
                 break;
             default:
