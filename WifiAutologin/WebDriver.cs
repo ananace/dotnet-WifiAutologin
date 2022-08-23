@@ -124,12 +124,24 @@ public class WebDriver : IDisposable
                     var match = rex.Match(element.Text);
 
                     var dict = match.Groups.AsDictionary();
+                    if (dict.ContainsKey("total_kb"))
+                        data.TotalMB = double.Parse(dict["total_kb"]) / 1024;
                     if (dict.ContainsKey("total_mb"))
-                        data.TotalMB = ulong.Parse(dict["total_mb"]);
+                        data.TotalMB = double.Parse(dict["total_mb"]);
+                    if (dict.ContainsKey("total_gb"))
+                        data.TotalMB = double.Parse(dict["total_gb"]) * 1024;
+                    if (dict.ContainsKey("avail_kb"))
+                        data.AvailableMB = double.Parse(dict["avail_kb"]) / 1024;
                     if (dict.ContainsKey("avail_mb"))
-                        data.AvailableMB = ulong.Parse(dict["avail_mb"]);
+                        data.AvailableMB = double.Parse(dict["avail_mb"]);
+                    if (dict.ContainsKey("avail_gb"))
+                        data.AvailableMB = double.Parse(dict["avail_gb"]) * 1024;
+                    if (dict.ContainsKey("used_kb"))
+                        data.UsedMB = double.Parse(dict["used_kb"]) / 1024;
                     if (dict.ContainsKey("used_mb"))
-                        data.UsedMB = ulong.Parse(dict["used_mb"]);
+                        data.UsedMB = double.Parse(dict["used_mb"]);
+                    if (dict.ContainsKey("used_gb"))
+                        data.UsedMB = double.Parse(dict["used_gb"]) * 1024;
                 }
                 break;
             default:

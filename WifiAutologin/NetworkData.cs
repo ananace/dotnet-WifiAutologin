@@ -2,13 +2,13 @@ namespace WifiAutologin;
 
 public class NetworkData
 {
-    public ulong? AvailableMB { get; set; }
-    public ulong? UsedMB { get; set; }
-    public ulong? TotalMB { get; set; }
+    public double? AvailableMB { get; set; }
+    public double? UsedMB { get; set; }
+    public double? TotalMB { get; set; }
 
     public bool IsInfinite => !TotalMB.HasValue && !AvailableMB.HasValue;
 
-    public ulong GetAvailableMB()
+    public double GetAvailableMB()
     {
         if (AvailableMB.HasValue)
             return AvailableMB.Value;
@@ -20,6 +20,6 @@ public class NetworkData
         if (TotalMB.HasValue)
             return TotalMB.Value;
 
-        return ulong.MaxValue;
+        return double.MaxValue;
     }
 }
