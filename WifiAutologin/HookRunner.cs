@@ -47,6 +47,7 @@ public static class HookRunner
         }
 
         var environment = new Dictionary<string, string>{
+            { "WIFI_AUTOLOGIN", "1" },
             { "NETWORK", network.SSID ?? "<SSID>" }
         };
         env?.ToList()?.ForEach(v => environment.Add(v.Key, v.Value));
