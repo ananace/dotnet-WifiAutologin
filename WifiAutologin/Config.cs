@@ -220,6 +220,8 @@ public class Config
         public string? SSID { get; private set; }
         [YamlMember(Alias = "url", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string? URL { get; private set; }
+        [YamlMember(Alias = "test-url", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public string? TestURL { get; private set; }
         public NetworkHooks Hooks { get; private set; } = new NetworkHooks();
         [YamlMember(Alias = "login", DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
         public List<NetworkAction> LoginActions { get; private set; } = new List<NetworkAction>();
@@ -247,6 +249,8 @@ public class Config
                 SSID = mapping.Children[new YamlScalarNode("ssid")].ToString();
             if (mapping.Children.ContainsKey(new YamlScalarNode("url")))
                 URL = mapping.Children[new YamlScalarNode("url")].ToString();
+            if (mapping.Children.ContainsKey(new YamlScalarNode("test-url")))
+                TestURL = mapping.Children[new YamlScalarNode("test-url")].ToString();
             if (mapping.Children.ContainsKey(new YamlScalarNode("driver")))
                 Driver = Enum.Parse<NetworkDriver>(mapping.Children[new YamlScalarNode("driver")].ToString(), true);
             if (mapping.Children.ContainsKey(new YamlScalarNode("hooks")))

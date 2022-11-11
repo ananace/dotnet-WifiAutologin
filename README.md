@@ -19,6 +19,10 @@ _global:
   # driver: edge
   # driver: chrome
 
+  # The URL to use for testing basic network connectivity with.
+  # Tests will check if the resulting HTTP code is in the range 200-299.
+  # test-url: http://detectportal.firefox.com/canonical.html
+
   # Hooks are shell commands that are executed as part of the navigation
   #   pre-login hooks run before the web driver launches
   #   login hooks run after the web driver has finished and network access has been verified
@@ -60,6 +64,8 @@ _global:
 CaptiveNetwork:
   # Will be detected automatically if not specified
   url: 'http://some-login-page.localdomain'
+  # Will use _global or fallback if not specified
+  test-url: 'http://internet-page.example.localdomain'
 
   # Steps necessary to finish a login, will automatically wait for elements to appear
   # Timeout in seconds can be specified with the value `timeout` - default is 5s
