@@ -99,7 +99,8 @@ public class Program
     static string ConnectionCheckUrl = "http://detectportal.firefox.com/canonical.html";
     public static bool ConnectionCheck()
     {
-        //httpClient.Timeout = TimeSpan.FromMilliseconds(1000);
+        // TODO: Make this configurable?
+        httpClient.Timeout = TimeSpan.FromMilliseconds(10000);
 
         try
         {
