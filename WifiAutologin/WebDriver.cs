@@ -4,6 +4,8 @@ namespace WifiAutologin;
 
 public class WebDriver : IDisposable
 {
+    static string FallbackUrl = "http://example.com";
+
     public Config.NetworkConfig Network { get; private set; }
     public OpenQA.Selenium.WebDriver Driver { get; private set; }
 
@@ -15,7 +17,6 @@ public class WebDriver : IDisposable
         Driver = CreateWebDriver(network.Driver ?? Config.NetworkDriver.Automatic);
     }
 
-    static string FallbackUrl = "http://example.com";
     public void Login()
     {
         WebDrivers.First(d => d.Value.WebDriver == Driver).Value.ActiveRequests = 0;
@@ -125,20 +126,22 @@ public class WebDriver : IDisposable
                 {
                     var rex = new System.Text.RegularExpressions.Regex(action.Regex);
                     var match = rex.Match(element.Text);
-
                     var dict = match.Groups.AsDictionary();
+
                     if (dict.ContainsKey("total_kb") && double.TryParse(dict["total_kb"], out var total_kb))
                         data.TotalMB = total_kb / 1024;
                     else if (dict.ContainsKey("total_mb") && double.TryParse(dict["total_mb"], out var total_mb))
                         data.TotalMB = total_mb;
                     else if (dict.ContainsKey("total_gb") && double.TryParse(dict["total_gb"], out var total_gb))
                         data.TotalMB = total_gb * 1024;
+
                     if (dict.ContainsKey("avail_kb") && double.TryParse(dict["avail_kb"], out var avail_kb))
                         data.AvailableMB = avail_kb / 1024;
                     else if (dict.ContainsKey("avail_mb") && double.TryParse(dict["avail_mb"], out var avail_mb))
                         data.AvailableMB = avail_mb;
                     else if (dict.ContainsKey("avail_gb") && double.TryParse(dict["avail_gb"], out var avail_gb))
                         data.AvailableMB = avail_gb * 1024;
+
                     if (dict.ContainsKey("used_kb") && double.TryParse(dict["used_kb"], out var used_kb))
                         data.UsedMB =  used_kb / 1024;
                     else if (dict.ContainsKey("used_mb") && double.TryParse(dict["used_mb"], out var used_mb))

@@ -92,25 +92,27 @@ public class Program
         if (!network.LoginActions.Any())
             return false;
 
-        return !ConnectionCheck();
+        return !ConnectionCheck(network);
     }
 
 
     static string ConnectionCheckUrl = "http://detectportal.firefox.com/canonical.html";
-    public static bool ConnectionCheck()
+    public static bool ConnectionCheck(Config.NetworkConfig? config = null)
     {
-        //httpClient.Timeout = TimeSpan.FromMilliseconds(1000);
+        // TODO: Make this configurable?
+        httpClient.Timeout = TimeSpan.FromMilliseconds(10000);
 
         try
         {
+            var url = config?.TestURL ?? ConnectionCheckUrl;
             Logger.Debug("Checking connection...");
-            var req = new HttpRequestMessage(HttpMethod.Get, ConnectionCheckUrl);
+            var req = new HttpRequestMessage(HttpMethod.Get, url);
             Logger.Debug($"< {req.Method} {req.RequestUri}");
             var res = httpClient.Send(req);
             Logger.Debug($"> {(int)res.StatusCode} {res.ReasonPhrase}");
 
             var code = (int)res.StatusCode;
-            return code < 300;
+            return code >= 200 && code < 300;
         }
         catch (Exception ex)
         {
