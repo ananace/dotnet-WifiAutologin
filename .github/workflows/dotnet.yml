@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         publish-version: [ 'linux-x64', 'win-x64' ]
-        dotnet-version: [ '6.0', '7.0' ]
+        dotnet-version: [ '7.0' ]
 
     steps:
       - uses: actions/checkout@v3
@@ -25,9 +25,9 @@ jobs:
         with:
           dotnet-version: ${{ matrix.dotnet-version }}
       - name: Install deps
-        run: dotnet restore
+        run: pushd WifiAutologin; dotnet restore; popd
       - name: Build ${{ matrix.publish-version }}
-        run: dotnet publish -r ${{ matrix.publish-version }} -c Release -o publish --sc
+        run: pushd WifiAutologin; dotnet publish -r ${{ matrix.publish-version }} -c Release -o ../publish --sc; popd
       - name: Upload dotnet test results
         uses: actions/upload-artifact@v3
         with:
