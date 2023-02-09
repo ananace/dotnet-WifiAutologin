@@ -97,8 +97,17 @@ public class Program
     static string ConnectionCheckUrl = "http://detectportal.firefox.com/canonical.html";
     public static bool ConnectionCheck(Config.NetworkConfig? config = null)
     {
-        // TODO: Make this configurable?
-        httpClient.Timeout = TimeSpan.FromMilliseconds(10000);
+        try
+        {
+            // TODO: Make this configurable?
+            httpClient.Timeout = TimeSpan.FromMilliseconds(10000);
+        }
+        // This instance has already started one or more requests. Properties can only be modified before sending the first request.
+        catch (System.InvalidOperationException ex)
+        {
+            // httpClient = new HttpClient(httpClientHandler);
+            // httpClient.Timeout = TimeSpan.FromMilliseconds(10000);
+        }
 
         try
         {
