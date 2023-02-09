@@ -59,10 +59,8 @@ public class Program
 
         Console.Out.WriteLine(helpText);
 
-        if (errs.IsHelp())
-            return;
-
-        Program.ExitCode = 1;
+        if (!errs.IsHelp())
+            Program.ExitCode = 1;
     }
 
     static void Run(string[] Args, Options result)
