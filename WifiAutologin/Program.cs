@@ -112,7 +112,13 @@ public class Program
             Logger.Debug($"> {(int)res.StatusCode} {res.ReasonPhrase}");
 
             var code = (int)res.StatusCode;
-            return code >= 200 && code < 300;
+            if (code < 200 || code >= 300)
+                return false;
+
+            if (res.Headers.Contains("Location"))
+                return false;
+
+            return true;
         }
         catch (Exception ex)
         {
