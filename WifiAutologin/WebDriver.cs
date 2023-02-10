@@ -57,10 +57,12 @@ public class WebDriver : IDisposable
             case Config.NetworkActionType.Input:
             case Config.NetworkActionType.Submit:
             case Config.NetworkActionType.Acquire:
-                if (element == null)
+                if (element == null && !(action.Dialog ?? false))
                     throw new Exception("Missing a web element for action");
-
-                ActOnElement(ref element, action, begin);
+                else if (action.Dialog ?? false)
+                    ActOnPage(action, begin);
+                else
+                    ActOnElement(ref element, action, begin);
                 break;
 
             default:
@@ -117,39 +119,46 @@ public class WebDriver : IDisposable
             case Config.NetworkActionType.Input:
             case Config.NetworkActionType.Submit:
             case Config.NetworkActionType.Acquire:
-                if (element == null)
+                if (element == null && !(action.Dialog ?? false))
                     throw new Exception("No element for action");
 
-                ActOnElement(ref element, action, begin);
-
-                if (action.Regex != null)
+                // TODO: Support reading data information from dialogs
+                if (action.Dialog ?? false)
+                    ActOnPage(action, begin);
+                else
                 {
-                    var rex = new System.Text.RegularExpressions.Regex(action.Regex);
-                    var match = rex.Match(element.Text);
-                    var dict = match.Groups.AsDictionary();
+                    ActOnElement(ref element, action, begin);
 
-                    if (dict.ContainsKey("total_kb") && double.TryParse(dict["total_kb"], out var total_kb))
-                        data.TotalMB = total_kb / 1024;
-                    else if (dict.ContainsKey("total_mb") && double.TryParse(dict["total_mb"], out var total_mb))
-                        data.TotalMB = total_mb;
-                    else if (dict.ContainsKey("total_gb") && double.TryParse(dict["total_gb"], out var total_gb))
-                        data.TotalMB = total_gb * 1024;
+                    if (action.Regex != null)
+                    {
+                        var rex = new System.Text.RegularExpressions.Regex(action.Regex);
+                        var match = rex.Match(element.Text);
+                        var dict = match.Groups.AsDictionary();
 
-                    if (dict.ContainsKey("avail_kb") && double.TryParse(dict["avail_kb"], out var avail_kb))
-                        data.AvailableMB = avail_kb / 1024;
-                    else if (dict.ContainsKey("avail_mb") && double.TryParse(dict["avail_mb"], out var avail_mb))
-                        data.AvailableMB = avail_mb;
-                    else if (dict.ContainsKey("avail_gb") && double.TryParse(dict["avail_gb"], out var avail_gb))
-                        data.AvailableMB = avail_gb * 1024;
+                        if (dict.ContainsKey("total_kb") && double.TryParse(dict["total_kb"], out var total_kb))
+                            data.TotalMB = total_kb / 1024;
+                        else if (dict.ContainsKey("total_mb") && double.TryParse(dict["total_mb"], out var total_mb))
+                            data.TotalMB = total_mb;
+                        else if (dict.ContainsKey("total_gb") && double.TryParse(dict["total_gb"], out var total_gb))
+                            data.TotalMB = total_gb * 1024;
 
-                    if (dict.ContainsKey("used_kb") && double.TryParse(dict["used_kb"], out var used_kb))
-                        data.UsedMB =  used_kb / 1024;
-                    else if (dict.ContainsKey("used_mb") && double.TryParse(dict["used_mb"], out var used_mb))
-                        data.UsedMB = used_mb;
-                    else if (dict.ContainsKey("used_gb") && double.TryParse(dict["used_gb"], out var used_gb))
-                        data.UsedMB = used_gb * 1024;
+                        if (dict.ContainsKey("avail_kb") && double.TryParse(dict["avail_kb"], out var avail_kb))
+                            data.AvailableMB = avail_kb / 1024;
+                        else if (dict.ContainsKey("avail_mb") && double.TryParse(dict["avail_mb"], out var avail_mb))
+                            data.AvailableMB = avail_mb;
+                        else if (dict.ContainsKey("avail_gb") && double.TryParse(dict["avail_gb"], out var avail_gb))
+                            data.AvailableMB = avail_gb * 1024;
+
+                        if (dict.ContainsKey("used_kb") && double.TryParse(dict["used_kb"], out var used_kb))
+                            data.UsedMB =  used_kb / 1024;
+                        else if (dict.ContainsKey("used_mb") && double.TryParse(dict["used_mb"], out var used_mb))
+                            data.UsedMB = used_mb;
+                        else if (dict.ContainsKey("used_gb") && double.TryParse(dict["used_gb"], out var used_gb))
+                            data.UsedMB = used_gb * 1024;
+                    }
                 }
                 break;
+
             default:
                 ActOnPage(action, begin);
                 break;
@@ -231,6 +240,32 @@ public class WebDriver : IDisposable
 
         switch (action.Action)
         {
+            case Config.NetworkActionType.Click:
+            case Config.NetworkActionType.Input:
+            case Config.NetworkActionType.Submit:
+                if (!(action.Dialog ?? false))
+                    throw new Exception("Only valid on dialog");
+
+                {
+                var alert = Driver.SwitchTo().Alert();
+                if (!string.IsNullOrEmpty(action.Input))
+                    alert?.SendKeys(action.Input);
+                alert?.Accept();
+                }
+                break;
+
+            case Config.NetworkActionType.Dismiss:
+                if (!(action.Dialog ?? false))
+                    throw new Exception("Only valid on dialog");
+
+                {
+                var alert = Driver.SwitchTo().Alert();
+                if (!string.IsNullOrEmpty(action.Input))
+                    alert?.SendKeys(action.Input);
+                alert?.Dismiss();
+                }
+                break;
+
             case Config.NetworkActionType.Script: Driver.ExecuteScript(action.Script); break;
             case Config.NetworkActionType.Sleep: System.Threading.Thread.Sleep((int)((action.Sleep ?? 0.25) * 1000)); break;
             case Config.NetworkActionType.Settle:

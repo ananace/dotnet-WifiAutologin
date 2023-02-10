@@ -129,13 +129,18 @@ public class Config
         Script,
         Sleep,
         Settle,
-        Acquire
+        Acquire,
+
+        // Dialog-unique action
+        Dismiss
     }
 
     public class NetworkAction
     {
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public NetworkActionType? Action { get; set; }
+        [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public bool? Dialog { get; set; }
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string? Element { get; set; }
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
@@ -153,7 +158,15 @@ public class Config
         {
             if (node is YamlMappingNode mapping)
             {
-                string[] accessedKeys = new string[] { "action", "script", "input", "sleep", "element", "regex" };
+                string[] accessedKeys = new string[] {
+                    "action",
+                    "dialog",
+                    "element",
+                    "input",
+                    "regex",
+                    "script",
+                    "sleep"
+                };
 
                 if (mapping.Children.Any(c => accessedKeys.Contains(c.Key.ToString())))
                 {
@@ -174,6 +187,9 @@ public class Config
                             Action = NetworkActionType.Click;
                     }
 
+                    if (mapping.Children.ContainsKey(new YamlScalarNode("dialog")))
+                        Dialog = true; //mapping.Children[new YamlScalarNode("dialog")];
+
                     if (mapping.Children.ContainsKey(new YamlScalarNode("script")))
                         Script = mapping.Children[new YamlScalarNode("script")].ToString();
                     else if (mapping.Children.ContainsKey(new YamlScalarNode("input")))
@@ -187,6 +203,7 @@ public class Config
                         Element = mapping.Children[new YamlScalarNode("element")].ToString();
                     else if (mapping.Children.ContainsKey(new YamlScalarNode("acquire")))
                         Element = mapping.Children[new YamlScalarNode("acquire")].ToString();
+
                     if (mapping.Children.ContainsKey(new YamlScalarNode("timeout")))
                         Timeout = float.Parse(mapping.Children[new YamlScalarNode("timeout")].ToString());
                 }
