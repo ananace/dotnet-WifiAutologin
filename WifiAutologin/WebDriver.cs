@@ -320,6 +320,7 @@ public class WebDriver : IDisposable
                 var opts = new OpenQA.Selenium.Firefox.FirefoxOptions();
                 opts.AddArguments("--headless", "--disable-gpu");
                 opts.SetEnvironmentVariable("MOZ_HEADLESS", "1");
+                opts.LogLevel = OpenQA.Selenium.Firefox.FirefoxDriverLogLevel.Error;
 
                 opts.SetLoggingPreference(OpenQA.Selenium.LogType.Browser, OpenQA.Selenium.LogLevel.Warning);
                 opts.SetLoggingPreference(OpenQA.Selenium.LogType.Client, OpenQA.Selenium.LogLevel.Severe);
