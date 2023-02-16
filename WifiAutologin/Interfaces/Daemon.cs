@@ -49,9 +49,15 @@ public class Daemon : IInterface
                 continue;
             }
 
+            // Run pre-login hooks before testing for connection, to allow for network-specific config
+            HookRunner.RunHooks(network, HookType.PreLogin, Config.NetworkHook.OnlyWhen.Always);
+
             if (!SkipConnectionCheck && !Program.NeedsLogin(network))
             {
                 Logger.Info("No login required, ignoring");
+
+                if (network.AlwaysHooks)
+                    HookRunner.RunHooks(network, HookType.Login, Config.NetworkHook.OnlyWhen.Success);
                 continue;
             }
 

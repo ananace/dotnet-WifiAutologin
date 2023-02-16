@@ -6,6 +6,7 @@ public enum HookType
 {
     PreLogin,
     Login,
+    PostLogin,
     Data,
     Error
 }
@@ -30,6 +31,12 @@ public static class HookRunner
                 hooks = network.Hooks.Login;
             else
                 hooks = Config.Instance.Fallback.Hooks.Login;
+            break;
+        case HookType.PostLogin:
+            if (network.Hooks.HasPostLogin)
+                hooks = network.Hooks.PostLogin;
+            else
+                hooks = Config.Instance.Fallback.Hooks.PostLogin;
             break;
         case HookType.Data:
             if (network.Hooks.HasData)

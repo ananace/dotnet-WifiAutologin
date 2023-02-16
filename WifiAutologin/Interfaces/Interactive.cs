@@ -40,10 +40,18 @@ public class Interactive : IInterface
             return;
         }
 
+        // Run pre-login hooks before testing for connection, to allow for network-specific config
+        if (result.Login)
+            HookRunner.RunHooks(network, HookType.PreLogin, Config.NetworkHook.OnlyWhen.Always);
+
         if (result.Login && (result.SkipConnectionCheck || Program.NeedsLogin(network)))
             Program.Login(network);
         else if (result.Login)
+        {
             Logger.Info("No login necessary, skipping.");
+            if (network.AlwaysHooks)
+                HookRunner.RunHooks(network, HookType.Login, Config.NetworkHook.OnlyWhen.Success);
+        }
 
         if (result.ReadData)
             Program.ReadData(network);

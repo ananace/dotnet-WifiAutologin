@@ -70,7 +70,6 @@ public class Program
         else if (result.Verbose)
             WifiAutologin.Logger.Level = System.Diagnostics.Tracing.EventLevel.Verbose;
         else if (result.Daemon)
-
             WifiAutologin.Logger.Level = System.Diagnostics.Tracing.EventLevel.Informational;
 
         Logger.Info("Starting up");
@@ -140,7 +139,7 @@ public class Program
         {
             Logger.Info($"Logging in to {network.SSID}...");
 
-            HookRunner.RunHooks(network, HookType.PreLogin, Config.NetworkHook.OnlyWhen.Always);
+            HookRunner.RunHooks(network, HookType.Login, Config.NetworkHook.OnlyWhen.Always);
 
             using(var driver = new WebDriver(network))
             {
@@ -148,13 +147,13 @@ public class Program
 
                 // Allow driver to live during the connection check, for any delayed action by the login
                 if (Program.ConnectionCheck())
-                    HookRunner.RunHooks(network, HookType.Login, Config.NetworkHook.OnlyWhen.Success);
+                    HookRunner.RunHooks(network, HookType.PostLogin, Config.NetworkHook.OnlyWhen.Success);
                 else
                 {
                     var environment = new Dictionary<string, string>{
                         { "ERROR", "Unable to verify connection after login" }
                     };
-                    HookRunner.RunHooks(network, HookType.Login, Config.NetworkHook.OnlyWhen.Failure, environment);
+                    HookRunner.RunHooks(network, HookType.PostLogin, Config.NetworkHook.OnlyWhen.Failure, environment);
                     HookRunner.RunHooks(network, HookType.Error, Config.NetworkHook.OnlyWhen.Always, environment);
                     ExitCode = 1;
                     return;
@@ -169,7 +168,7 @@ public class Program
             var environment = new Dictionary<string, string>{
                 { "ERROR", ex.ToString() }
             };
-            HookRunner.RunHooks(network, HookType.Login, Config.NetworkHook.OnlyWhen.Failure, environment);
+            HookRunner.RunHooks(network, HookType.PostLogin, Config.NetworkHook.OnlyWhen.Failure, environment);
             HookRunner.RunHooks(network, HookType.Error, Config.NetworkHook.OnlyWhen.Always, environment);
             ExitCode = 1;
         }

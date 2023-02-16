@@ -78,6 +78,8 @@ public class Config
         public List<NetworkHook> PreLogin { get; private set; } = new List<NetworkHook>();
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
         public List<NetworkHook> Login { get; private set; } = new List<NetworkHook>();
+        [YamlMember(Alias = "post-login", DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
+        public List<NetworkHook> PostLogin { get; private set; } = new List<NetworkHook>();
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
         public List<NetworkHook> Data { get; private set; } = new List<NetworkHook>();
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
@@ -87,6 +89,8 @@ public class Config
         public bool HasPreLogin => PreLogin.Any();
         [YamlIgnore]
         public bool HasLogin => Login.Any();
+        [YamlIgnore]
+        public bool HasPostLogin => PostLogin.Any();
         [YamlIgnore]
         public bool HasData => Data.Any();
         [YamlIgnore]
@@ -98,6 +102,8 @@ public class Config
                 PreLogin.AddRange(source.PreLogin);
             if (!Login.Any())
                 Login.AddRange(source.Login);
+            if (!PostLogin.Any())
+                PostLogin.AddRange(source.PostLogin);
             if (!Data.Any())
                 Data.AddRange(source.Data);
             if (!Error.Any())
@@ -114,6 +120,8 @@ public class Config
                 PreLogin.AddRange(((YamlSequenceNode)mapping.Children[new YamlScalarNode("pre-login")]).Select(n => NetworkHook.ParseFromNode(n)));
             if (mapping.Children.ContainsKey(new YamlScalarNode("login")))
                 Login.AddRange(((YamlSequenceNode)mapping.Children[new YamlScalarNode("login")]).Select(n => NetworkHook.ParseFromNode(n)));
+            if (mapping.Children.ContainsKey(new YamlScalarNode("post-login")))
+                PostLogin.AddRange(((YamlSequenceNode)mapping.Children[new YamlScalarNode("post-login")]).Select(n => NetworkHook.ParseFromNode(n)));
             if (mapping.Children.ContainsKey(new YamlScalarNode("data")))
                 Data.AddRange(((YamlSequenceNode)mapping.Children[new YamlScalarNode("data")]).Select(n => NetworkHook.ParseFromNode(n)));
             if (mapping.Children.ContainsKey(new YamlScalarNode("error")))
@@ -239,6 +247,9 @@ public class Config
         public string? URL { get; private set; }
         [YamlMember(Alias = "test-url", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public string? TestURL { get; private set; }
+        [YamlMember(Alias = "always-run-hooks", DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
+        public bool AlwaysHooks { get; private set; }
+        [YamlMember(Alias = "hooks", DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
         public NetworkHooks Hooks { get; private set; } = new NetworkHooks();
         [YamlMember(Alias = "login", DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
         public List<NetworkAction> LoginActions { get; private set; } = new List<NetworkAction>();
@@ -268,6 +279,8 @@ public class Config
                 URL = mapping.Children[new YamlScalarNode("url")].ToString();
             if (mapping.Children.ContainsKey(new YamlScalarNode("test-url")))
                 TestURL = mapping.Children[new YamlScalarNode("test-url")].ToString();
+            if (mapping.Children.ContainsKey(new YamlScalarNode("always-run-hooks")))
+                AlwaysHooks = bool.Parse(mapping.Children[new YamlScalarNode("always-run-hooks")].ToString());
             if (mapping.Children.ContainsKey(new YamlScalarNode("driver")))
                 Driver = Enum.Parse<NetworkDriver>(mapping.Children[new YamlScalarNode("driver")].ToString(), true);
             if (mapping.Children.ContainsKey(new YamlScalarNode("hooks")))

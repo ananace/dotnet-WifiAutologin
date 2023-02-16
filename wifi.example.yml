@@ -19,9 +19,15 @@ _global:
   # The data hooks can include the variables DATA_INFINTE, DATA_AVAILABLE, DATA_TOTAL, and DATA_USED - based on what the hooks find
   hooks:
     pre-login:
-      - 'notify-send -i network-wireless-hotspot -u low -a wifi-autologin "WiFi Autologin" "Attempting to log into ${NETWORK}..."'
+      - 'notify-send -i network-wireless-hotspot -u low -a wifi-autologin "WiFi Autologin" "Disabling active VPN before login attempt"'
+        onlyif: 'nmcli c show --active | grep MyVPN'
+      - hook: 'nmcli c down id MyVPN'
+        onlyif: 'nmcli c show --active | grep MyVPN'
 
     login:
+      - 'notify-send -i network-wireless-hotspot -u low -a wifi-autologin "WiFi Autologin" "Attempting to log into ${NETWORK}..."'
+
+    post-login:
       - 'notify-send -i network-wireless-hotspot -u low -a wifi-autologin "WiFi Autologin" "Automatically logged into $NETWORK"'
 
     error:
@@ -58,15 +64,23 @@ CaptiveNetwork:
     - element: '#emailBox'
       input: 'email@example.com'
     # action: input
+
     # Run JavaScript
     - script: '$("form#submit-form").submit()'
     # action: script
+
     # Wait half a second
     - sleep: 0.5
     # action: sleep
+
     # Click the element matching the selector
     - '#actionContinue'
     # action: click
+
+    # Accept the popup dialog/alert
+    - dialog: true
+    # action: click
+
     # Wait for DOM to settle
     - action: settle
 
