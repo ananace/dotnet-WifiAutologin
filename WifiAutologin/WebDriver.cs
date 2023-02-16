@@ -320,6 +320,13 @@ public class WebDriver : IDisposable
                 var opts = new OpenQA.Selenium.Firefox.FirefoxOptions();
                 opts.AddArguments("--headless", "--disable-gpu");
                 opts.SetEnvironmentVariable("MOZ_HEADLESS", "1");
+
+                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Browser, OpenQA.Selenium.LogLevel.Warning);
+                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Client, OpenQA.Selenium.LogLevel.Severe);
+                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Driver, OpenQA.Selenium.LogLevel.Severe);
+                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Server, OpenQA.Selenium.LogLevel.Severe);
+                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Profiler, OpenQA.Selenium.LogLevel.Off);
+
                 return new OpenQA.Selenium.Firefox.FirefoxDriver(opts);
             }
         },
@@ -328,6 +335,13 @@ public class WebDriver : IDisposable
             {
                 var opts = new OpenQA.Selenium.Chrome.ChromeOptions();
                 opts.AddArguments("--headless", "--disable-gpu");
+
+                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Browser, OpenQA.Selenium.LogLevel.Warning);
+                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Client, OpenQA.Selenium.LogLevel.Severe);
+                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Driver, OpenQA.Selenium.LogLevel.Severe);
+                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Server, OpenQA.Selenium.LogLevel.Severe);
+                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Profiler, OpenQA.Selenium.LogLevel.Off);
+
                 return new OpenQA.Selenium.Chrome.ChromeDriver(opts);
             }
         },
@@ -336,6 +350,13 @@ public class WebDriver : IDisposable
             {
                 var opts = new OpenQA.Selenium.Edge.EdgeOptions();
                 opts.AddArguments("--headless", "--disable-gpu");
+
+                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Browser, OpenQA.Selenium.LogLevel.Warning);
+                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Client, OpenQA.Selenium.LogLevel.Severe);
+                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Driver, OpenQA.Selenium.LogLevel.Severe);
+                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Server, OpenQA.Selenium.LogLevel.Severe);
+                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Profiler, OpenQA.Selenium.LogLevel.Off);
+
                 return new OpenQA.Selenium.Edge.EdgeDriver(opts);
             }
         },
