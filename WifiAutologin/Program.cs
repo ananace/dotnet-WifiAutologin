@@ -126,6 +126,11 @@ public class Program
 
             return true;
         }
+        catch (TaskCanceledException ex)
+        {
+            Logger.Warning("Connectivity check timed out.");
+            return false;
+        }
         catch (Exception ex)
         {
             Logger.Error($"Failed to check connection: {ex}");
