@@ -50,7 +50,7 @@ public class Interactive : IInterface
         {
             Logger.Info("No login necessary, skipping.");
             if (network.AlwaysHooks)
-                HookRunner.RunHooks(network, HookType.Login, Config.NetworkHook.OnlyWhen.Success);
+                HookRunner.RunHooks(network, HookType.PostLogin, Config.NetworkHook.OnlyWhen.Success);
         }
 
         if (result.ReadData)
