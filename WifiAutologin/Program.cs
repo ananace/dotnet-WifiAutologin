@@ -128,7 +128,7 @@ public class Program
         }
         catch (TaskCanceledException ex)
         {
-            Logger.Warning("Connectivity check timed out.");
+            Logger.Warn("Connectivity check timed out.");
             return false;
         }
         catch (Exception ex)
