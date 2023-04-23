@@ -21,34 +21,19 @@ public static class HookRunner
         switch (type)
         {
         case HookType.PreLogin:
-            if (network.Hooks.HasPreLogin)
-                hooks = network.Hooks.PreLogin;
-            else
-                hooks = Config.Instance.Fallback.Hooks.PreLogin;
+            hooks = network.Hooks.PreLogin ?? Config.Instance.Fallback.Hooks.PreLogin ?? new List<Config.NetworkHook>();
             break;
         case HookType.Login:
-            if (network.Hooks.HasLogin)
-                hooks = network.Hooks.Login;
-            else
-                hooks = Config.Instance.Fallback.Hooks.Login;
+            hooks = network.Hooks.Login ?? Config.Instance.Fallback.Hooks.Login ?? new List<Config.NetworkHook>();
             break;
         case HookType.PostLogin:
-            if (network.Hooks.HasPostLogin)
-                hooks = network.Hooks.PostLogin;
-            else
-                hooks = Config.Instance.Fallback.Hooks.PostLogin;
+            hooks = network.Hooks.PostLogin ?? Config.Instance.Fallback.Hooks.PostLogin ?? new List<Config.NetworkHook>();
             break;
         case HookType.Data:
-            if (network.Hooks.HasData)
-                hooks = network.Hooks.Data;
-            else
-                hooks = Config.Instance.Fallback.Hooks.Data;
+            hooks = network.Hooks.Data ?? Config.Instance.Fallback.Hooks.Data ?? new List<Config.NetworkHook>();
             break;
         case HookType.Error:
-            if (network.Hooks.HasError)
-                hooks = network.Hooks.Error;
-            else
-                hooks = Config.Instance.Fallback.Hooks.Error;
+            hooks = network.Hooks.Error ?? Config.Instance.Fallback.Hooks.Error ?? new List<Config.NetworkHook>();
             break;
         default: return;
         }

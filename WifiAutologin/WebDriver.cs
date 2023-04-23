@@ -61,8 +61,10 @@ public class WebDriver : IDisposable
                     throw new Exception("Missing a web element for action");
                 else if (action.Dialog ?? false)
                     ActOnPage(action, begin);
-                else
+                else if (element != null)
                     ActOnElement(ref element, action, begin);
+                else
+                    throw new Exception("Element is null and dialog not triggered - this should never happen");
                 break;
 
             default:
@@ -125,7 +127,7 @@ public class WebDriver : IDisposable
                 // TODO: Support reading data information from dialogs
                 if (action.Dialog ?? false)
                     ActOnPage(action, begin);
-                else
+                else if (element != null)
                 {
                     ActOnElement(ref element, action, begin);
 
@@ -157,6 +159,8 @@ public class WebDriver : IDisposable
                             data.UsedMB = used_gb * 1024;
                     }
                 }
+                else
+                    throw new Exception("Element is null and dialog not triggered - this should never happen");
                 break;
 
             default:

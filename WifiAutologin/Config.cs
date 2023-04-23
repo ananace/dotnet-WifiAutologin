@@ -75,39 +75,28 @@ public class Config
     public class NetworkHooks
     {
         [YamlMember(Alias = "pre-login", DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
-        public List<NetworkHook> PreLogin { get; private set; } = new List<NetworkHook>();
+        public List<NetworkHook>? PreLogin { get; private set; } = null;
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
-        public List<NetworkHook> Login { get; private set; } = new List<NetworkHook>();
+        public List<NetworkHook>? Login { get; private set; } = null;
         [YamlMember(Alias = "post-login", DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
-        public List<NetworkHook> PostLogin { get; private set; } = new List<NetworkHook>();
+        public List<NetworkHook>? PostLogin { get; private set; } = null;
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
-        public List<NetworkHook> Data { get; private set; } = new List<NetworkHook>();
+        public List<NetworkHook>? Data { get; private set; } = null;
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
-        public List<NetworkHook> Error { get; private set; } = new List<NetworkHook>();
-
-        [YamlIgnore]
-        public bool HasPreLogin => PreLogin.Any();
-        [YamlIgnore]
-        public bool HasLogin => Login.Any();
-        [YamlIgnore]
-        public bool HasPostLogin => PostLogin.Any();
-        [YamlIgnore]
-        public bool HasData => Data.Any();
-        [YamlIgnore]
-        public bool HasError => Error.Any();
+        public List<NetworkHook>? Error { get; private set; } = null;
 
         public void Merge(NetworkHooks source)
         {
-            if (!PreLogin.Any())
-                PreLogin.AddRange(source.PreLogin);
-            if (!Login.Any())
-                Login.AddRange(source.Login);
-            if (!PostLogin.Any())
-                PostLogin.AddRange(source.PostLogin);
-            if (!Data.Any())
-                Data.AddRange(source.Data);
-            if (!Error.Any())
-                Error.AddRange(source.Error);
+            if (PreLogin == null)
+                PreLogin = new List<NetworkHook>(source.PreLogin ?? new List<NetworkHook>());
+            if (Login == null)
+                Login = new List<NetworkHook>(source.Login ?? new List<NetworkHook>());
+            if (PostLogin == null)
+                PostLogin = new List<NetworkHook>(source.PostLogin ?? new List<NetworkHook>());
+            if (Data == null)
+                Data = new List<NetworkHook>(source.Data ?? new List<NetworkHook>());
+            if (Error == null)
+                Error = new List<NetworkHook>(source.Error ?? new List<NetworkHook>());
         }
 
         public void LoadFromNode(YamlNode node)
@@ -117,15 +106,15 @@ public class Config
                 throw new ArgumentException("Not a mapping node");
 
             if (mapping.Children.ContainsKey(new YamlScalarNode("pre-login")))
-                PreLogin.AddRange(((YamlSequenceNode)mapping.Children[new YamlScalarNode("pre-login")]).Select(n => NetworkHook.ParseFromNode(n)));
+                PreLogin = ((YamlSequenceNode)mapping.Children[new YamlScalarNode("pre-login")]).Select(n => NetworkHook.ParseFromNode(n)).ToList();
             if (mapping.Children.ContainsKey(new YamlScalarNode("login")))
-                Login.AddRange(((YamlSequenceNode)mapping.Children[new YamlScalarNode("login")]).Select(n => NetworkHook.ParseFromNode(n)));
+                Login = ((YamlSequenceNode)mapping.Children[new YamlScalarNode("login")]).Select(n => NetworkHook.ParseFromNode(n)).ToList();
             if (mapping.Children.ContainsKey(new YamlScalarNode("post-login")))
-                PostLogin.AddRange(((YamlSequenceNode)mapping.Children[new YamlScalarNode("post-login")]).Select(n => NetworkHook.ParseFromNode(n)));
+                PostLogin = ((YamlSequenceNode)mapping.Children[new YamlScalarNode("post-login")]).Select(n => NetworkHook.ParseFromNode(n)).ToList();
             if (mapping.Children.ContainsKey(new YamlScalarNode("data")))
-                Data.AddRange(((YamlSequenceNode)mapping.Children[new YamlScalarNode("data")]).Select(n => NetworkHook.ParseFromNode(n)));
+                Data = ((YamlSequenceNode)mapping.Children[new YamlScalarNode("data")]).Select(n => NetworkHook.ParseFromNode(n)).ToList();
             if (mapping.Children.ContainsKey(new YamlScalarNode("error")))
-                Error.AddRange(((YamlSequenceNode)mapping.Children[new YamlScalarNode("error")]).Select(n => NetworkHook.ParseFromNode(n)));
+                Error = ((YamlSequenceNode)mapping.Children[new YamlScalarNode("error")]).Select(n => NetworkHook.ParseFromNode(n)).ToList();
         }
     }
 
