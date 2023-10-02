@@ -58,6 +58,8 @@ public class Daemon : IInterface
 
                 if (network.AlwaysHooks)
                     HookRunner.RunHooks(network, HookType.Login, Config.NetworkHook.OnlyWhen.Success);
+
+                HookRunner.RunHooks(network, HookType.PostLogin, Config.NetworkHook.OnlyWhen.Success);
                 continue;
             }
 
