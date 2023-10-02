@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <Target Name="CopyCustomContentOnPublish" AfterTargets="Publish" Condition="'$(OS)' == 'UNIX'">
-    <Copy SourceFiles="Linux/wifi-autologin.service" DestinationFolder="$(PublishDir)" />
+    <Copy SourceFiles="../Linux/wifi-autologin.service" DestinationFolder="$(PublishDir)" />
   </Target>
 
 </Project>
