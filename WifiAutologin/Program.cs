@@ -1,4 +1,5 @@
 using CommandLine;
+using System.Diagnostics.CodeAnalysis;
 
 namespace WifiAutologin;
 
@@ -29,6 +30,8 @@ public class Program
     }
 
     public static int ExitCode { get; set; } = 0;
+
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Options))]
     public static int Main(string[] Args)
     {
         var parser = new CommandLine.Parser(s => {

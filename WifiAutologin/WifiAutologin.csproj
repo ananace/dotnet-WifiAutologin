@@ -10,7 +10,8 @@
     <PublishReadyToRun>true</PublishReadyToRun>
     <PublishSingleFile>true</PublishSingleFile>
 
-    <PublishTrimmed>true</PublishTrimmed>
+    <!-- Breaks DBus / BackendFactory -->
+    <PublishTrimmed>false</PublishTrimmed>
     <TrimMode>link</TrimMode>
     <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
   </PropertyGroup>
