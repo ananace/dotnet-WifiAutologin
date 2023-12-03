@@ -102,8 +102,9 @@ public class Program
             httpClient.Timeout = TimeSpan.FromMilliseconds(10000);
         }
         // This instance has already started one or more requests. Properties can only be modified before sending the first request.
-        catch (System.InvalidOperationException ex)
+        catch (System.InvalidOperationException)
         {
+            Logger.Debug("Failed to set HTTP client timeout, continuing with default.");
             // httpClient = new HttpClient(httpClientHandler);
             // httpClient.Timeout = TimeSpan.FromMilliseconds(10000);
         }
@@ -126,7 +127,7 @@ public class Program
 
             return true;
         }
-        catch (TaskCanceledException ex)
+        catch (TaskCanceledException)
         {
             Logger.Warn("Connectivity check timed out.");
             return false;

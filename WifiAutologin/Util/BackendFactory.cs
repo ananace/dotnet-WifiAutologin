@@ -64,7 +64,7 @@ public static class BackendFactory
 
             try
             {
-                instance = backend.GetConstructors().First().Invoke(null) as IDiscoveryBackend;
+                instance = Activator.CreateInstance(backend) as IDiscoveryBackend;
             }
             catch (Exception ex)
             {

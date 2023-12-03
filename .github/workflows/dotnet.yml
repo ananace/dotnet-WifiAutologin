@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         publish-version: [ 'linux-x64', 'win-x64' ]
-        dotnet-version: [ '7.0' ]
+        dotnet-version: [ '8.0' ]
 
     steps:
       - uses: actions/checkout@v3

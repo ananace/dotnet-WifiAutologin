@@ -312,6 +312,10 @@ public class Config
         return File.GetLastWriteTimeUtc(ConfigPath) > LastWrite;
     }
 
+    static void ShowExampleConfig()
+    {
+    }
+
     public static string ConfigPath => Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "wifi.yml");
 
     static Config? _instance = null;

@@ -188,10 +188,10 @@ public class WebDriver : IDisposable
             {
                 return Driver.FindElement(OpenQA.Selenium.By.CssSelector(action.Element));
             }
-            catch (OpenQA.Selenium.NoSuchElementException ex)
+            catch (OpenQA.Selenium.NoSuchElementException)
             {
                 if (DateTime.Now > endTime)
-                    throw ex;
+                    throw;
                 else
                     System.Threading.Thread.Sleep(100);
             }
@@ -216,21 +216,21 @@ public class WebDriver : IDisposable
                 }
                 break;
             }
-            catch (OpenQA.Selenium.ElementNotInteractableException ex)
+            catch (OpenQA.Selenium.ElementNotInteractableException)
             {
                 if (DateTime.Now > endTime)
-                    throw ex;
+                    throw;
                 else
                     System.Threading.Thread.Sleep(100);
             }
-            catch (OpenQA.Selenium.StaleElementReferenceException ex)
+            catch (OpenQA.Selenium.StaleElementReferenceException)
             {
                 if (action.Element == null)
-                    throw ex;
+                    throw;
 
                 var newElement = FindElement(action, start);
                 if (DateTime.Now > endTime)
-                    throw ex;
+                    throw;
 
                 element = newElement;
             }
