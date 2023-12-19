@@ -13,6 +13,9 @@ public class Program
         public bool Verbose { get; set; } = false;
         [CommandLine.Option('q', "quiet", Required = false)]
         public bool Quiet { get; set; } = false;
+        [CommandLine.Option('C', "config", Required = false, HelpText = "Show example configuration and exit")]
+        public bool ExampleConfig { get; set; } = false;
+
         [CommandLine.Option('d', "daemonize", Required = false, HelpText = "Run as a long-lived service, acting on network changes")]
         public bool Daemon { get; set; } = false;
 
@@ -68,6 +71,12 @@ public class Program
 
     static void Run(string[] Args, Options result)
     {
+        if (result.ExampleConfig)
+        {
+            Console.WriteLine(Config.ExampleConfig());
+            return;
+        }
+
         if (result.Quiet)
             WifiAutologin.Logger.Level = System.Diagnostics.Tracing.EventLevel.Error;
         else if (result.Verbose)

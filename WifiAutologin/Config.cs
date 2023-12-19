@@ -30,15 +30,15 @@ public class Config
             Always
         }
 
-        public string Hook { get; private set; } = "";
+        public string Hook { get; set; } = "";
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public string? Unless { get; private set; }
+        public string? Unless { get; set; }
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitDefaults)]
-        public OnlyWhen When { get; private set; } = OnlyWhen.Success;
+        public OnlyWhen When { get; set; } = OnlyWhen.Success;
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public string? If { get; private set; }
+        public string? If { get; set; }
         [YamlMember(Alias = "final", DefaultValuesHandling = DefaultValuesHandling.OmitDefaults)]
-        public bool Break { get; private set; } = false;
+        public bool Break { get; set; } = false;
 
         public void LoadFromNode(YamlNode node)
         {
@@ -74,16 +74,16 @@ public class Config
 
     public class NetworkHooks
     {
-        [YamlMember(Alias = "pre-login", DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
-        public List<NetworkHook>? PreLogin { get; private set; } = null;
-        [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
-        public List<NetworkHook>? Login { get; private set; } = null;
-        [YamlMember(Alias = "post-login", DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
-        public List<NetworkHook>? PostLogin { get; private set; } = null;
-        [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
-        public List<NetworkHook>? Data { get; private set; } = null;
-        [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
-        public List<NetworkHook>? Error { get; private set; } = null;
+        [YamlMember(Alias = "pre-login", DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections | DefaultValuesHandling.OmitNull)]
+        public List<NetworkHook>? PreLogin { get; set; } = null;
+        [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections | DefaultValuesHandling.OmitNull)]
+        public List<NetworkHook>? Login { get; set; } = null;
+        [YamlMember(Alias = "post-login", DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections | DefaultValuesHandling.OmitNull)]
+        public List<NetworkHook>? PostLogin { get; set; } = null;
+        [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections | DefaultValuesHandling.OmitNull)]
+        public List<NetworkHook>? Data { get; set; } = null;
+        [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections | DefaultValuesHandling.OmitNull)]
+        public List<NetworkHook>? Error { get; set; } = null;
 
         public void Merge(NetworkHooks source)
         {
@@ -229,21 +229,21 @@ public class Config
     public class NetworkConfig
     {
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public NetworkDriver? Driver { get; private set; }
+        public NetworkDriver? Driver { get; set; }
         [YamlMember(Alias = "ssid", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public string? SSID { get; private set; }
+        public string? SSID { get; set; }
         [YamlMember(Alias = "url", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public string? URL { get; private set; }
+        public string? URL { get; set; }
         [YamlMember(Alias = "test-url", DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
-        public string? TestURL { get; private set; }
-        [YamlMember(Alias = "always-run-hooks", DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
-        public bool AlwaysHooks { get; private set; }
+        public string? TestURL { get; set; }
+        [YamlMember(Alias = "always-run-hooks", DefaultValuesHandling = DefaultValuesHandling.OmitDefaults)]
+        public bool AlwaysHooks { get; set; } = false;
         [YamlMember(Alias = "hooks", DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
-        public NetworkHooks Hooks { get; private set; } = new NetworkHooks();
+        public NetworkHooks Hooks { get; set; } = new NetworkHooks();
         [YamlMember(Alias = "login", DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
-        public List<NetworkAction> LoginActions { get; private set; } = new List<NetworkAction>();
+        public List<NetworkAction> LoginActions { get; set; } = new List<NetworkAction>();
         [YamlMember(Alias = "data", DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
-        public List<NetworkAction> DataActions { get; private set; } = new List<NetworkAction>();
+        public List<NetworkAction> DataActions { get; set; } = new List<NetworkAction>();
 
         [YamlIgnore]
         public bool HasData => DataActions.Any();
@@ -312,8 +312,68 @@ public class Config
         return File.GetLastWriteTimeUtc(ConfigPath) > LastWrite;
     }
 
-    static void ShowExampleConfig()
+    public static string ExampleConfig()
     {
+        Config example = new Config();
+
+        var hooks = example.Fallback.Hooks;
+        hooks.PreLogin = new List<NetworkHook>() {
+            new NetworkHook {
+                Hook = "nmcli c down id VPN-Connection",
+                If = "nmcli c show --active id VPN-Connection | grep connection.id",
+            }
+        };
+        hooks.Login = new List<NetworkHook>() {
+            new NetworkHook {
+                Hook = "notify-send -i network-wireless-hotspot -u low -a wifi-autologin \"Wifi Autologin\" \"Logging into ${NETWORK}\""
+            }
+        };
+        hooks.PostLogin = new List<NetworkHook>() {
+            new NetworkHook {
+                Hook = "notify-send -i network-wireless-hotspot -u low -a wifi-autologin \"Wifi Autologin\" \"Automatically logged into ${NETWORK}\""
+            },
+            new NetworkHook {
+                Hook = "nmcli c up id VPN-Connection",
+                Unless = "nmcli c show --active id VPN-Connection | grep connection.id",
+            }
+        };
+        hooks.Error = new List<NetworkHook>() {
+            new NetworkHook {
+                Hook = "notify-send -i network-wireless-hotspot -u low -a wifi-autologin \"Wifi Autologin\" \"Failed to log into ${NETWORK}, ${ERROR}\""
+            }
+        };
+
+        var network = new NetworkConfig() {
+            SSID = "example",
+            LoginActions = new List<NetworkAction>() {
+                new NetworkAction {
+                    Action = NetworkActionType.Input,
+                    Element = "#email",
+                    Input = "my-email@example.com"
+                },
+                new NetworkAction {
+                    Action = NetworkActionType.Click,
+                    Element = "#accept-checkbox"
+                },
+                new NetworkAction {
+                    Action = NetworkActionType.Sleep,
+                    Sleep = 0.5f
+                },
+                new NetworkAction {
+                    Action = NetworkActionType.Script,
+                    Script = "$(\"form#submit-form\").submit()"
+                }
+            }
+        };
+
+        example.Networks = new List<NetworkConfig>() {
+            network
+        };
+
+        var yamlWriter = new StringWriter();
+        example.Serialize(yamlWriter);
+
+        return yamlWriter.ToString();
     }
 
     public static string ConfigPath => Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "wifi.yml");
@@ -339,20 +399,38 @@ public class Config
                 var yaml = new YamlStream();
                 yaml.Load(reader);
 
+                bool legacy = true;
+
                 var root = (YamlMappingNode)yaml.Documents[0].RootNode;
                 foreach (var network in root.Children)
                 {
-                    if (network.Key.ToString() == "_global")
+                    if (network.Key.ToString() == "_global" || network.Key.ToString() == "defaults")
                     {
                         Logger.Debug("Loading globals from config...");
                         _instance.Fallback.LoadFromNode(network.Value);
+
+                        if (network.Key.ToString() == "defaults")
+                            legacy = false;
                     }
-                    else
+                    else if (network.Key.ToString() == "networks")
                     {
-                        Logger.Debug($"Loading network {network.Key} from config...");
+                        legacy = false;
+
+                        foreach (var netConfig in ((YamlMappingNode)network.Value).Children)
+                        {
+                            Logger.Debug($"Loading network {network.Key} from config...");
+                            var parsed = NetworkConfig.ParseFromNode(network.Value, network.Key.ToString());
+                            _instance.Networks.Add(parsed);
+                        }
+                    }
+                    else if (legacy)
+                    {
+                        Logger.Debug($"Loading legacy network {network.Key} from config...");
                         var parsed = NetworkConfig.ParseFromNode(network.Value, network.Key.ToString());
                         _instance.Networks.Add(parsed);
                     }
+                    else
+                        Logger.Warn($"Found invalid key {network.Key} in config, ignoring");
                 }
             }
         }
@@ -363,6 +441,7 @@ public class Config
     public void Serialize(System.IO.TextWriter output)
     {
         var serializer = new YamlDotNet.Serialization.SerializerBuilder()
+            .WithIndentedSequences()
             .WithNamingConvention(YamlDotNet.Serialization.NamingConventions.CamelCaseNamingConvention.Instance)
             .WithTypeConverter(new Config.EnumTypeConverter())
             .Build();
@@ -370,6 +449,7 @@ public class Config
         serializer.Serialize(output, this);
     }
 
-    public NetworkConfig Fallback { get; private set; } = new NetworkConfig();
-    public List<NetworkConfig> Networks { get; private set; } = new List<NetworkConfig>();
+    [YamlMember(Alias = "defaults")]
+    public NetworkConfig Fallback { get; set; } = new NetworkConfig();
+    public List<NetworkConfig> Networks { get; set; } = new List<NetworkConfig>();
 }
