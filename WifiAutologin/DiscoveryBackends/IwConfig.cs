@@ -46,6 +46,8 @@ public class IwConfig : IDiscoveryBackend
                     if (!match.Success)
                         continue;
 
+                    // TODO: Check if IP address is resolved
+
                     yield return match.Groups[1].Value;
                 }
             }
