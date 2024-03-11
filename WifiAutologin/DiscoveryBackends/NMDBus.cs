@@ -47,6 +47,7 @@ public class NMDBus : IDiscoveryBackend, IDisposable
 
     public bool IsAvailable =>
 #if OS == UNIX
+        false &&
         OperatingSystem.IsLinux() &&
         NMConnection != null;
 #else
@@ -79,7 +80,7 @@ public class NMDBus : IDiscoveryBackend, IDisposable
 
         Logger.Debug("Adding watchers...");
         Dictionary<string, IDisposable> watchers = new Dictionary<string, IDisposable>();
-        var wrapper = new DisposableWrapper(watchers);
+        var wrapper = new DisposableCollector(watchers);
 
         async void OnStateChange(IDevice device, DeviceState newState, DeviceState oldState, uint reason)
         {

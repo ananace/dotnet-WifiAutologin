@@ -14,7 +14,13 @@ public class Daemon : IInterface
         var backend = BackendFactory.CreateDaemonBackend();
         if (backend == null)
         {
-            Console.Error.WriteLine("Unable to find a daemonizable backend.");
+            backend = BackendFactory.CreateDaemonizedBackend();
+            Logger.Warn("Unable to find a daemonizable backend, falling back to polling.");
+        }
+
+        if (backend == null)
+        {
+            Console.Error.WriteLine("Failed to find a valid daemon backend");
             Program.ExitCode = 1;
             return;
         }
