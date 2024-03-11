@@ -47,7 +47,6 @@ public class NMDBus : IDiscoveryBackend, IDisposable
 
     public bool IsAvailable =>
 #if OS == UNIX
-        false &&
         OperatingSystem.IsLinux() &&
         NMConnection != null;
 #else
