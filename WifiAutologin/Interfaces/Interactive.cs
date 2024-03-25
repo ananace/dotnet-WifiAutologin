@@ -14,7 +14,7 @@ public class Interactive : IInterface
 
         if (networkName == null && result.AutodetectNetwork)
         {
-            var backend = BackendFactory.CreateBackend();
+            var backend = BackendFactory.CreateInteractiveBackend();
             Logger.Info($"Using backend {backend.GetName()}");
 
             if (backend.IsConnectedToVPN)

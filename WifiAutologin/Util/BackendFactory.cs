@@ -6,7 +6,7 @@ public static class BackendFactory
 {
     static ILogger Logger { get; } = WifiAutologin.Logger.Global[typeof(BackendFactory)];
 
-    public static IDiscoveryBackend CreateBackend()
+    public static IDiscoveryBackend CreateInteractiveBackend()
     {
         return AvailableBackends.First(b => b.IsAvailable);
     }
@@ -17,7 +17,7 @@ public static class BackendFactory
     public static IDiscoveryBackend? CreateDaemonizedBackend()
     {
         // Return a real daemon-capable backend if one exists, otherwise wrap a polled one
-        return CreateDaemonBackend() ?? new DaemonizableBackendWrapper(CreateBackend());
+        return CreateDaemonBackend() ?? new DaemonizableBackendWrapper(CreateInteractiveBackend());
     }
 
     static List<IDiscoveryBackend> _AvailableBackends = new List<IDiscoveryBackend>();
@@ -43,6 +43,8 @@ public static class BackendFactory
         var backends = new[] {
             // Linux
             typeof(DiscoveryBackends.NMDBus),
+            typeof(DiscoveryBackends.WickedDBus),
+
             typeof(DiscoveryBackends.Iw),
             typeof(DiscoveryBackends.IwConfig),
 
@@ -52,16 +54,16 @@ public static class BackendFactory
 
         OSFamily fam = OSFamily.None;
         if (OperatingSystem.IsLinux())
-            fam |= OSFamily.Linux;
-        if (OperatingSystem.IsWindows())
-            fam |= OSFamily.Windows;
+            fam = OSFamily.Linux;
+        else if (OperatingSystem.IsWindows())
+            fam = OSFamily.Windows;
 
         foreach (var backend in backends)
         {
             var attr = backend.GetCustomAttribute<DiscoveryBackendAttribute>();
             if (attr != null)
             {
-                if ((attr.OSes & fam) == OSFamily.None)
+                if (!attr.OSes.HasFlag(fam))
                     continue;
             }
 
