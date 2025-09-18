@@ -29,7 +29,7 @@ jobs:
       - name: Build ${{ matrix.publish-version }}
         run: pushd WifiAutologin; dotnet publish -f net${{ matrix.dotnet-version }} -r ${{ matrix.publish-version }} -c Release -o ../publish --sc; popd
       - name: Upload dotnet build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: publish-net${{ matrix.dotnet-version }}-${{ matrix.publish-version }}
           path: publish/
