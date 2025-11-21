@@ -10,17 +10,25 @@ public class WebDriver : IDisposable
     public OpenQA.Selenium.WebDriver Driver { get; private set; }
 
     static ILogger Logger { get; } = WifiAutologin.Logger.Global[typeof(WebDriver)];
+    int ActiveRequests = 0;
 
     public WebDriver(Config.NetworkConfig network)
     {
         Network = network;
         Driver = CreateWebDriver(network.Driver ?? Config.NetworkDriver.Automatic);
+
+        Driver.Manage().Network.NetworkRequestSent += (ev, s) => {
+            var active = ++ActiveRequests;
+            Logger.Debug($"New request; {ev} for {s}. Currently {active} active.");
+        };
+        Driver.Manage().Network.NetworkResponseReceived += (ev, s) => {
+            var active = --ActiveRequests;
+            Logger.Debug($"Request {ev} for {s} finished. Currently {active} active.");
+        };
     }
 
     public void Login()
     {
-        WebDrivers.First(d => d.Value.WebDriver == Driver).Value.ActiveRequests = 0;
-
         var url = Network.URL ?? Config.Instance.Fallback.URL ?? FallbackUrl;
         Logger.Debug($"Navigating to {url}");
         try
@@ -30,7 +38,6 @@ public class WebDriver : IDisposable
         catch (OpenQA.Selenium.WebDriverException ex)
         {
             Logger.Debug($"Failed to use driver, recreating - {ex}");
-            WebDrivers.Clear();
             Driver = CreateWebDriver(Network.Driver ?? Config.NetworkDriver.Automatic);
             Driver.Navigate().GoToUrl(url);
         }
@@ -85,8 +92,6 @@ public class WebDriver : IDisposable
 
     public NetworkData? ReadData()
     {
-        WebDrivers.First(d => d.Value.WebDriver == Driver).Value.ActiveRequests = 0;
-
         var data = new NetworkData();
 
         var url = Network.URL ?? Config.Instance.Fallback.URL;
@@ -101,7 +106,15 @@ public class WebDriver : IDisposable
         catch (OpenQA.Selenium.WebDriverException ex)
         {
             Logger.Debug($"Failed to use driver, recreating - {ex}");
-            WebDrivers.Clear();
+            try
+            {
+                Driver.Close();
+            }
+            catch (Exception ex2)
+            {
+                Logger.Debug($"Failed to close driver, just disposing - {ex2}");
+            }
+            Driver.Dispose();
             Driver = CreateWebDriver(Network.Driver ?? Config.NetworkDriver.Automatic);
             Driver.Navigate().GoToUrl(url);
         }
@@ -289,7 +302,7 @@ public class WebDriver : IDisposable
                     }
 
                     // Check if any active requests are still outstanding
-                    if (WebDrivers.Values.First(d => d.WebDriver == Driver).ActiveRequests > 0)
+                    if (ActiveRequests > 0)
                     {
                         Logger.Debug("  Active WebDriver requests, waiting");
                         continue;
@@ -336,21 +349,6 @@ public class WebDriver : IDisposable
             }
         },
         {
-            Config.NetworkDriver.Chrome, () =>
-            {
-                var opts = new OpenQA.Selenium.Chrome.ChromeOptions();
-                opts.AddArguments("--headless", "--disable-gpu");
-
-                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Browser, OpenQA.Selenium.LogLevel.Warning);
-                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Client, OpenQA.Selenium.LogLevel.Severe);
-                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Driver, OpenQA.Selenium.LogLevel.Severe);
-                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Server, OpenQA.Selenium.LogLevel.Severe);
-                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Profiler, OpenQA.Selenium.LogLevel.Off);
-
-                return new OpenQA.Selenium.Chrome.ChromeDriver(opts);
-            }
-        },
-        {
             Config.NetworkDriver.Edge, () =>
             {
                 var opts = new OpenQA.Selenium.Edge.EdgeOptions();
@@ -365,28 +363,28 @@ public class WebDriver : IDisposable
                 return new OpenQA.Selenium.Edge.EdgeDriver(opts);
             }
         },
-    };
-    class WebDriverStorage
-    {
-        public OpenQA.Selenium.WebDriver? WebDriver { get; set; } = null;
-        public int ActiveRequests { get; set; } = 0;
-    }
-    static Dictionary<Config.NetworkDriver, WebDriverStorage> WebDrivers = new Dictionary<Config.NetworkDriver, WebDriverStorage>();
+        {
+            Config.NetworkDriver.Chrome, () =>
+            {
+                var opts = new OpenQA.Selenium.Chrome.ChromeOptions();
+                opts.AddArguments("--headless", "--disable-gpu");
 
+                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Browser, OpenQA.Selenium.LogLevel.Warning);
+                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Client, OpenQA.Selenium.LogLevel.Severe);
+                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Driver, OpenQA.Selenium.LogLevel.Severe);
+                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Server, OpenQA.Selenium.LogLevel.Severe);
+                opts.SetLoggingPreference(OpenQA.Selenium.LogType.Profiler, OpenQA.Selenium.LogLevel.Off);
+
+                return new OpenQA.Selenium.Chrome.ChromeDriver(opts);
+            }
+        },
+    };
     private static OpenQA.Selenium.WebDriver CreateWebDriver(Config.NetworkDriver preferred)
     {
         OpenQA.Selenium.WebDriver? driver = null;
 
         if (preferred == Config.NetworkDriver.Automatic)
         {
-            if (WebDrivers.Any(d => d.Value != null))
-            {
-                driver = WebDrivers.Values.First(d => d != null).WebDriver;
-                if (driver == null)
-                    throw new Exception("Null driver object in storage");
-                return driver;
-            }
-
             Logger.Debug("Finding first available webdriver...");
             Config.NetworkDriver type = Config.NetworkDriver.Automatic;
             foreach (var factory in WebDriverFactories)
@@ -394,17 +392,6 @@ public class WebDriver : IDisposable
                 Logger.Debug($"Trying {factory.Key}");
                 try
                 {
-                    if (WebDrivers.ContainsKey(factory.Key))
-                    {
-                        if (WebDrivers[factory.Key] == null)
-                            continue;
-
-                        driver = WebDrivers[factory.Key].WebDriver;
-                        if (driver == null)
-                            throw new Exception("Null driver object in storage");
-                        return driver;
-                    }
-
                     driver = factory.Value();
                     type = factory.Key;
                     break;
@@ -421,36 +408,18 @@ public class WebDriver : IDisposable
             }
 
             Logger.Debug($"Found default driver as {type}");
-
-            WebDrivers[type] = new WebDriverStorage { WebDriver = driver };
         }
         else
         {
-            if (WebDrivers.ContainsKey(preferred) && WebDrivers[preferred] != null)
-                driver = WebDrivers[preferred].WebDriver;
-
-            if (driver != null)
-                return driver;
-
             if (!WebDriverFactories.ContainsKey(preferred))
                 return CreateWebDriver(Config.NetworkDriver.Automatic);
 
             var factory = WebDriverFactories[preferred];
             driver = factory();
-            WebDrivers[preferred] = new WebDriverStorage { WebDriver = driver };
         }
 
         if (driver == null)
             throw new Exception("Failed to create a web driver");
-
-        driver.Manage().Network.NetworkRequestSent += (ev, s) => {
-            var active = ++WebDrivers.First(d => d.Value.WebDriver == driver).Value.ActiveRequests;
-            Logger.Debug($"New request; {ev} for {s}. Currently {active} active.");
-        };
-        driver.Manage().Network.NetworkResponseReceived += (ev, s) => {
-            var active = --WebDrivers.First(d => d.Value.WebDriver == driver).Value.ActiveRequests;
-            Logger.Debug($"Request {ev} for {s} finished. Currently {active} active.");
-        };
 
         return driver;
     }
