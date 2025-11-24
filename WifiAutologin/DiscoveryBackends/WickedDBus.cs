@@ -29,12 +29,6 @@ public class WickedDBus : IDiscoveryBackend, IDisposable
 #endif
     public bool IsConnected => ConnectedNetworks.Any();
     public bool IsConnectedToVPN => false;
-    public bool SupportsDaemonize => true;
-
-    public IDisposable WatchChanges(Action<IDiscoveryBackend> handler)
-    {
-        return new DisposableWrapper();
-    }
 
     public IEnumerable<string> ConnectedNetworks { get { return new string[0]; } }
 }

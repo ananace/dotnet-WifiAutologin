@@ -11,37 +11,56 @@ public class Daemon : IInterface
     {
         SkipConnectionCheck = Args.SkipConnectionCheck;
 
-        var backend = BackendFactory.CreateDaemonBackend();
+        var backend = BackendFactory.CreateDaemonBackend() ?? BackendFactory.CreateInteractiveBackend();
         if (backend == null)
         {
-            backend = BackendFactory.CreateDaemonizedBackend();
-            Logger.Warn("Unable to find a daemonizable backend, falling back to polling.");
-        }
-
-        if (backend == null)
-        {
-            Console.Error.WriteLine("Failed to find a valid daemon backend");
+            Console.Error.WriteLine("Failed to find a valid backend");
             Program.ExitCode = 1;
             return;
         }
 
-        var quitEvent = new ManualResetEvent(false);
+        Logger.Debug($"Using backend {backend.GetType()}");
 
-        Console.CancelKeyPress += delegate(object? sender, ConsoleCancelEventArgs e) {
-            e.Cancel = true;
-            quitEvent.Set();
-        };
-
-        using (backend.WatchChanges(OnChange))
+        if (backend is IStreamingDiscoveryBackend streamingBackend)
         {
+            var quitEvent = new ManualResetEvent(false);
+
+            Console.CancelKeyPress += delegate(object? sender, ConsoleCancelEventArgs e) {
+                e.Cancel = true;
+                quitEvent.Set();
+            };
+
+            streamingBackend.OnConnectionChanged += (_, __) => OnChange(backend);
+            streamingBackend.WatchChanges();
+
             Logger.Info("Launched background change watcher...");
             quitEvent.WaitOne();
-            Logger.Info("Quitting...");
         }
+        else
+        {
+            bool run = true;
+            Console.CancelKeyPress += delegate(object? sender, ConsoleCancelEventArgs e) {
+                e.Cancel = true;
+                run = false;
+            };
+
+            Logger.Info("Launching backend polling...");
+            var wasConnected = backend.ConnectedNetworks.ToHashSet();
+            while (run)
+            {
+                var nowConnected = backend.ConnectedNetworks.ToHashSet();
+                if (nowConnected != wasConnected)
+                    OnChange(backend);
+
+                wasConnected = nowConnected;
+
+                Thread.Sleep(1000);
+            }
+        }
+        Logger.Info("Quitting...");
     }
 
-    object LoginLock = new object();
-    bool AttemptingLogin = false;
+    List<CancellationTokenSource> ActiveLogins = new List<CancellationTokenSource>();
     void OnChange(IDiscoveryBackend backend)
     {
         foreach (var net in backend.ConnectedNetworks)
@@ -69,21 +88,21 @@ public class Daemon : IInterface
                 continue;
             }
 
-            lock(LoginLock)
             {
-                if (AttemptingLogin)
+                foreach (var active in ActiveLogins)
+                {
+                    active.Cancel();
+                }
+
+                if (ActiveLogins.Any())
                 {
                     Logger.Info("Skipping login due to exisitng login attempt");
                     continue;
                 }
 
-                AttemptingLogin = true;
-
                 Logger.Info("Logging in...");
 
                 Program.Login(network);
-
-                AttemptingLogin = false;
             }
         }
     }

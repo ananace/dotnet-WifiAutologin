@@ -6,9 +6,14 @@ public interface IDiscoveryBackend
 
     bool IsConnected { get; }
     bool IsConnectedToVPN { get; }
-    bool SupportsDaemonize { get; }
-
-    IDisposable WatchChanges(Action<IDiscoveryBackend> handler);
 
     IEnumerable<string> ConnectedNetworks { get; }
+}
+
+public interface IStreamingDiscoveryBackend : IDiscoveryBackend
+{
+    event EventHandler OnConnectionChanged;
+
+    void WatchChanges();
+
 }

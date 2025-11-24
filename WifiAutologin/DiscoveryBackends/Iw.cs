@@ -12,12 +12,6 @@ public class Iw : IDiscoveryBackend
     public bool IsAvailable => OperatingSystem.IsLinux() && PathUtils.ExistsOnPath("iw");
     public bool IsConnected => ConnectedNetworks.Any();
     public bool IsConnectedToVPN => false;
-    public bool SupportsDaemonize => false;
-
-    public IDisposable WatchChanges(Action<IDiscoveryBackend> handler)
-    {
-        throw new NotImplementedException();
-    }
 
     public IEnumerable<string> ConnectedNetworks { get
         {

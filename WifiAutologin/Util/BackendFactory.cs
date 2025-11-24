@@ -10,14 +10,9 @@ public static class BackendFactory
     {
         return AvailableBackends.First(b => b.IsAvailable);
     }
-    public static IDiscoveryBackend? CreateDaemonBackend()
+    public static IStreamingDiscoveryBackend? CreateDaemonBackend()
     {
-        return AvailableBackends.FirstOrDefault(b => b.IsAvailable && b.SupportsDaemonize);
-    }
-    public static IDiscoveryBackend? CreateDaemonizedBackend()
-    {
-        // Return a real daemon-capable backend if one exists, otherwise wrap a polled one
-        return CreateDaemonBackend() ?? new DaemonizableBackendWrapper(CreateInteractiveBackend());
+        return AvailableBackends.OfType<IStreamingDiscoveryBackend>().FirstOrDefault(b => b.IsAvailable);
     }
 
     static List<IDiscoveryBackend> _AvailableBackends = new List<IDiscoveryBackend>();

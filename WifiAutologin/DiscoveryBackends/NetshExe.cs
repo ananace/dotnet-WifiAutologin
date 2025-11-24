@@ -12,12 +12,6 @@ public class NetshExe : IDiscoveryBackend
     public bool IsAvailable => OperatingSystem.IsWindows() && PathUtils.ExistsOnPath("netsh.exe");
     public bool IsConnected => ConnectedNetworks.Any();
     public bool IsConnectedToVPN => false;
-    public bool SupportsDaemonize => false;
-
-    public IDisposable WatchChanges(Action<IDiscoveryBackend> handler)
-    {
-        throw new NotImplementedException();
-    }
 
     public IEnumerable<string> ConnectedNetworks { get
         {

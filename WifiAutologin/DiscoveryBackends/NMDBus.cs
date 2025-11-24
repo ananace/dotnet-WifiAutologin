@@ -8,7 +8,7 @@ using WifiAutologin.Util;
 namespace WifiAutologin.DiscoveryBackends;
 
 [DiscoveryBackend("NetworkManager", OSes = OSFamily.Linux)]
-public class NMDBus : IDiscoveryBackend, IDisposable
+public class NMDBus : IStreamingDiscoveryBackend, IDisposable
 {
     static ILogger Logger { get; } = WifiAutologin.Logger.Global[typeof(NMDBus)];
 
@@ -23,13 +23,12 @@ public class NMDBus : IDiscoveryBackend, IDisposable
     {
 #if OS == UNIX
         NMConnection = null;
-        LastConnected?.Clear();
+        watchThread = null;
 #endif
     }
 
 #if OS == UNIX
     INetworkManager? NMConnection;
-    List<ObjectPath>? LastConnected;
 
     public NMDBus()
     {
@@ -59,19 +58,28 @@ public class NMDBus : IDiscoveryBackend, IDisposable
 
         return task.Result.Any(n => n.VPN);
     } }
-    public bool SupportsDaemonize => true;
 
+    public IEnumerable<string> ConnectedNetworks => FindConnectedNetworks().Result.Where(net => net.Type.Contains("wireless")).Select(net => net.Id);
 
-    public IDisposable WatchChanges(Action<IDiscoveryBackend> handler)
+    public event EventHandler? OnConnectionChanged;
+
+    Thread? watchThread;
+    public void WatchChanges()
+    {
+        if (watchThread != null)
+            return;
+
+        watchThread = new Thread(WatchThread);
+        watchThread.Start();
+    }
+
+    void WatchThread()
     {
 #if OS == UNIX
         if (NMConnection == null)
             throw new Exception("No DBus connection");
 
-        if (LastConnected == null)
-            LastConnected = new List<ObjectPath>();
         IEnumerable<IDevice> wifiDevices = new IDevice[0];
-
         Task.WaitAll(Task.Run(async () => {
             wifiDevices = await (await NMConnection.GetDevicesAsync())
                 .Where(async d => await d.GetDeviceTypeAsync() == DeviceType.WiFi);
@@ -79,15 +87,19 @@ public class NMDBus : IDiscoveryBackend, IDisposable
 
         Logger.Debug("Adding watchers...");
         Dictionary<string, IDisposable> watchers = new Dictionary<string, IDisposable>();
-        var wrapper = new DisposableCollector(watchers);
+        using var wrapper = new DisposableCollector(watchers);
 
-        async void OnStateChange(IDevice device, DeviceState newState, DeviceState oldState, uint reason)
+        void OnStateChange(IDevice device, DeviceState newState, DeviceState oldState, uint reason)
         {
             Logger.Debug($"State change for {device.ObjectPath}: {oldState} => {newState} ({reason})");
 
             if (newState == DeviceState.Activated)
-                await Task.Run(() => handler(this));
-        }
+            {
+                Task.Run(() => {
+                    OnConnectionChanged?.Invoke(this, EventArgs.Empty);
+                });
+            }
+        };
 
         async void OnDeviceAdded(IDevice device)
         {
@@ -124,44 +136,32 @@ public class NMDBus : IDiscoveryBackend, IDisposable
             }
         }
 
-        List<Task> tasks = new List<Task>();
-        tasks.Add(Task.Run(async () => {
+        Task.Run(async () => {
             Logger.Debug($"Adding watcher for OnDeviceAdded");
             var watcher = await NMConnection.WatchDeviceAddedAsync(c => {
                 var dev = Connection.System.CreateProxy<IDevice>("org.freedesktop.NetworkManager", c);
                 OnDeviceAdded(dev);
             });
             watchers["OnDeviceAdded"] = watcher;
-        }));
-        tasks.Add(Task.Run(async () => {
+        });
+        Task.Run(async () => {
             Logger.Debug($"Adding watcher for OnDeviceRemoved");
             var watcher = await NMConnection.WatchDeviceRemovedAsync(c => {
                 var dev = Connection.System.CreateProxy<IDevice>("org.freedesktop.NetworkManager", c);
                 OnDeviceRemoved(dev);
             });
             watchers["OnDeviceRemoved"] = watcher;
-        }));
+        });
 
-        tasks.AddRange(wifiDevices.Select(device => {
-            return Task.Run(() => OnDeviceAdded(device));
-        }));
+        foreach (var device in wifiDevices) {
+            OnDeviceAdded(device);
+        }
 
-        Task.WaitAll(tasks.ToArray());
-
-        Logger.Debug($"Finished adding {watchers.Count} watchers");
-
-        return wrapper;
-#else
-        return null;
+        while (true) {
+            Thread.Sleep(250);
+        }
 #endif
     }
-
-    public IEnumerable<string> ConnectedNetworks { get {
-        var task = FindConnectedNetworks();
-        task.Wait();
-
-        return task.Result.Where(n => n.Type.Contains("wireless")).Select(n => n.Id);
-    } }
 
     public async Task<IEnumerable<NMNetwork>> FindConnectedNetworks()
     {
@@ -176,12 +176,6 @@ public class NMDBus : IDiscoveryBackend, IDisposable
         var connections = (await NMConnection.GetActiveConnectionsAsync()).ToList();
         foreach (var active in connections)
         {
-            if (LastConnected?.Contains(active) ?? false)
-            {
-                Logger.Debug($"- Was already connected to {active}, skipping");
-                continue;
-            }
-
             Logger.Debug($"- Working on {active}...");
             var nmConn = Connection.System.CreateProxy<IActive>("org.freedesktop.NetworkManager", active);
 
@@ -198,11 +192,6 @@ public class NMDBus : IDiscoveryBackend, IDisposable
             ret.Add(new NMNetwork { Id = id, Type = type, VPN = vpn });
         }
 
-        LastConnected?.Clear();
-        LastConnected?.AddRange(connections);
-
-#else
-        await Task.FromResult<object?>(null);
 #endif
         return ret;
     }

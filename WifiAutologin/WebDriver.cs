@@ -187,7 +187,9 @@ public class WebDriver : IDisposable
 
     public void Dispose()
     {
+        Logger.Debug("Disposing");
         Driver.Close();
+        Driver.Dispose();
     }
 
     OpenQA.Selenium.IWebElement FindElement(Config.NetworkAction action, DateTime? start = null)
