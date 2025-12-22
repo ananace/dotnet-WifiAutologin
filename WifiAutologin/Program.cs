@@ -105,9 +105,12 @@ public class Program
     }
 
 
+    public static Uri? RedirectURL = null;
     static string ConnectionCheckUrl = "http://detectportal.firefox.com/canonical.html";
     public static bool ConnectionCheck(Config.NetworkConfig? config = null)
     {
+        RedirectURL = null;
+
         try
         {
             // TODO: Make this configurable?
@@ -130,11 +133,16 @@ public class Program
             var res = httpClient.Send(req);
             Logger.Debug($"> {(int)res.StatusCode} {res.ReasonPhrase}");
 
+            if (res.Headers.Contains("Location"))
+            {
+                RedirectURL = res.Headers.Location;
+                Logger.Debug($"Found redirect URL as {RedirectURL}...");
+
+                return false;
+            }
+
             var code = (int)res.StatusCode;
             if (code < 200 || code >= 300)
-                return false;
-
-            if (res.Headers.Contains("Location"))
                 return false;
 
             return true;
@@ -189,6 +197,10 @@ public class Program
             HookRunner.RunHooks(network, HookType.PostLogin, Config.NetworkHook.OnlyWhen.Failure, environment);
             HookRunner.RunHooks(network, HookType.Error, Config.NetworkHook.OnlyWhen.Always, environment);
             ExitCode = 1;
+        }
+        finally
+        {
+            RedirectURL = null;
         }
     }
 

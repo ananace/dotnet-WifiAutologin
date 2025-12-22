@@ -94,7 +94,7 @@ public class WebDriver : IDisposable
     {
         var data = new NetworkData();
 
-        var url = Network.URL ?? Config.Instance.Fallback.URL;
+        var url = Network.URL ?? Program.RedirectURL?.AbsoluteUri ?? Config.Instance.Fallback.URL;
         if (url == null)
             return null;
 
