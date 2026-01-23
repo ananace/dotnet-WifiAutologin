@@ -177,6 +177,7 @@ public class Program
                     try
                     {
                         driver.Login();
+                        break;
                     }
                     catch (OpenQA.Selenium.WebDriverTimeoutException)
                     {
