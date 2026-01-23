@@ -90,9 +90,7 @@ public class Daemon : IInterface
 
             {
                 foreach (var active in ActiveLogins)
-                {
                     active.Cancel();
-                }
 
                 if (ActiveLogins.Any())
                 {
@@ -102,7 +100,7 @@ public class Daemon : IInterface
 
                 Logger.Info("Logging in...");
 
-                Program.Login(network);
+                Program.Login(network, attempts: 3, timeout: TimeSpan.FromSeconds(10));
             }
         }
     }

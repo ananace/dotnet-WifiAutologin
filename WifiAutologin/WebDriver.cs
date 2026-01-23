@@ -9,6 +9,8 @@ public class WebDriver : IDisposable
     public Config.NetworkConfig Network { get; private set; }
     public OpenQA.Selenium.WebDriver Driver { get; private set; }
 
+    public TimeSpan LoadTimeout { get; set; } = TimeSpan.FromSeconds(30);
+
     static ILogger Logger { get; } = WifiAutologin.Logger.Global[typeof(WebDriver)];
     int ActiveRequests = 0;
 
@@ -17,11 +19,18 @@ public class WebDriver : IDisposable
         Network = network;
         Driver = CreateWebDriver(network.Driver ?? Config.NetworkDriver.Automatic);
 
-        Driver.Manage().Network.NetworkRequestSent += (ev, s) => {
+        SetupDriver(Driver);
+    }
+
+    void SetupDriver(OpenQA.Selenium.IWebDriver driver)
+    {
+        var opts = driver.Manage();
+        opts.Timeouts().PageLoad = LoadTimeout;
+        opts.Network.NetworkRequestSent += (ev, s) => {
             var active = ++ActiveRequests;
             Logger.Debug($"New request; {ev} for {s}. Currently {active} active.");
         };
-        Driver.Manage().Network.NetworkResponseReceived += (ev, s) => {
+        opts.Network.NetworkResponseReceived += (ev, s) => {
             var active = --ActiveRequests;
             Logger.Debug($"Request {ev} for {s} finished. Currently {active} active.");
         };
@@ -39,6 +48,7 @@ public class WebDriver : IDisposable
         {
             Logger.Debug($"Failed to use driver, recreating - {ex}");
             Driver = CreateWebDriver(Network.Driver ?? Config.NetworkDriver.Automatic);
+            SetupDriver(Driver);
             Driver.Navigate().GoToUrl(url);
         }
 

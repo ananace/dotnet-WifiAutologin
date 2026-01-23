@@ -159,7 +159,7 @@ public class Program
         }
     }
 
-    public static void Login(Config.NetworkConfig network)
+    public static void Login(Config.NetworkConfig network, int? attempts = null, TimeSpan? timeout = null)
     {
         try
         {
@@ -169,7 +169,21 @@ public class Program
 
             using(var driver = new WebDriver(network))
             {
-                driver.Login();
+                if (timeout.HasValue)
+                    driver.LoadTimeout = timeout.Value;
+
+                for (int i = attempts ?? 1; i > 0; --i)
+                {
+                    try
+                    {
+                        driver.Login();
+                    }
+                    catch (OpenQA.Selenium.WebDriverTimeoutException)
+                    {
+                        if (i == 1)
+                            throw;
+                    }
+                }
 
                 // Allow driver to live during the connection check, for any delayed action by the login
                 if (Program.ConnectionCheck())
