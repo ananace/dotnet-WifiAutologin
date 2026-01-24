@@ -177,12 +177,15 @@ public class Program
                     try
                     {
                         driver.Login();
+                        Logger.Info("Logged in.");
                         break;
                     }
-                    catch (OpenQA.Selenium.WebDriverTimeoutException)
+                    catch (OpenQA.Selenium.WebDriverTimeoutException ex)
                     {
                         if (i == 1)
                             throw;
+                        else
+                            Logger.Warn($"{ex.GetType()} exception occurred - {ex}, retrying login");
                     }
                 }
 
