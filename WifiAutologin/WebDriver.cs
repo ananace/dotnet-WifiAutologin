@@ -38,7 +38,7 @@ public class WebDriver : IDisposable
 
     public void Login()
     {
-        var url = Network.URL ?? Config.Instance.Fallback.URL ?? FallbackUrl;
+        var url = Network.URL ?? Program.RedirectURL?.ToString() ?? Config.Instance.Fallback.URL ?? FallbackUrl;
         Logger.Debug($"Navigating to {url}");
         try
         {
