@@ -347,8 +347,10 @@ public class WebDriver : IDisposable
             Config.NetworkDriver.Firefox, () =>
             {
                 var opts = new OpenQA.Selenium.Firefox.FirefoxOptions();
-                opts.AddArguments("--headless", "--disable-gpu");
+                opts.AddArguments("--headless");
                 opts.SetEnvironmentVariable("MOZ_HEADLESS", "1");
+                opts.SetEnvironmentVariable("MOZ_REMOTE_SETTINGS_DEVTOOLS", "1");
+                opts.AcceptInsecureCertificates = true;
                 opts.LogLevel = OpenQA.Selenium.Firefox.FirefoxDriverLogLevel.Error;
 
                 opts.SetLoggingPreference(OpenQA.Selenium.LogType.Browser, OpenQA.Selenium.LogLevel.Warning);
@@ -364,6 +366,7 @@ public class WebDriver : IDisposable
             Config.NetworkDriver.Edge, () =>
             {
                 var opts = new OpenQA.Selenium.Edge.EdgeOptions();
+                opts.AcceptInsecureCertificates = true;
                 opts.AddArguments("--headless", "--disable-gpu");
 
                 opts.SetLoggingPreference(OpenQA.Selenium.LogType.Browser, OpenQA.Selenium.LogLevel.Warning);
@@ -379,6 +382,7 @@ public class WebDriver : IDisposable
             Config.NetworkDriver.Chrome, () =>
             {
                 var opts = new OpenQA.Selenium.Chrome.ChromeOptions();
+                opts.AcceptInsecureCertificates = true;
                 opts.AddArguments("--headless", "--disable-gpu");
 
                 opts.SetLoggingPreference(OpenQA.Selenium.LogType.Browser, OpenQA.Selenium.LogLevel.Warning);
