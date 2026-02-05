@@ -26,6 +26,7 @@ public class WebDriver : IDisposable
     {
         var opts = driver.Manage();
         opts.Timeouts().PageLoad = LoadTimeout;
+        opts.Network.StartMonitoring();
         opts.Network.NetworkRequestSent += (ev, s) => {
             var active = ++ActiveRequests;
             Logger.Debug($"New request; {ev} for {s}. Currently {active} active.");
@@ -198,6 +199,7 @@ public class WebDriver : IDisposable
     public void Dispose()
     {
         Logger.Debug("Disposing");
+        Driver.Quit();
         Driver.Close();
         Driver.Dispose();
     }
