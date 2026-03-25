@@ -100,7 +100,7 @@ public class Daemon : IInterface
 
                 Logger.Info("Logging in...");
 
-                Program.Login(network, attempts: 3, timeout: TimeSpan.FromSeconds(10));
+                Program.Login(network, attempts: 3, timeout: TimeSpan.FromSeconds(60));
             }
         }
     }

@@ -92,10 +92,6 @@ public class Program
             new Interfaces.Interactive().Run(result);
     }
 
-    static readonly HttpClientHandler httpClientHandler = new HttpClientHandler() {
-        AllowAutoRedirect = false
-    };
-    static readonly HttpClient httpClient = new HttpClient(httpClientHandler);
     public static bool NeedsLogin(Config.NetworkConfig network)
     {
         if (!network.LoginActions.Any())
@@ -111,18 +107,10 @@ public class Program
     {
         RedirectURL = null;
 
-        try
-        {
-            // TODO: Make this configurable?
-            httpClient.Timeout = TimeSpan.FromMilliseconds(10000);
-        }
-        // This instance has already started one or more requests. Properties can only be modified before sending the first request.
-        catch (System.InvalidOperationException)
-        {
-            Logger.Debug("Failed to set HTTP client timeout, continuing with default.");
-            // httpClient = new HttpClient(httpClientHandler);
-            // httpClient.Timeout = TimeSpan.FromMilliseconds(10000);
-        }
+        using var httpClient = new HttpClient(new HttpClientHandler() {
+            AllowAutoRedirect = false
+        });
+        httpClient.Timeout = TimeSpan.FromMilliseconds(10000);
 
         try
         {
@@ -167,41 +155,39 @@ public class Program
 
             HookRunner.RunHooks(network, HookType.Login, Config.NetworkHook.OnlyWhen.Always);
 
-            using(var driver = new WebDriver(network))
+            using var driver = new WebDriver(network);
+            if (timeout.HasValue)
+                driver.LoadTimeout = timeout.Value;
+
+            for (int i = attempts ?? 1; i > 0; --i)
             {
-                if (timeout.HasValue)
-                    driver.LoadTimeout = timeout.Value;
-
-                for (int i = attempts ?? 1; i > 0; --i)
+                try
                 {
-                    try
-                    {
-                        driver.Login();
-                        Logger.Info("Logged in.");
-                        break;
-                    }
-                    catch (OpenQA.Selenium.WebDriverTimeoutException ex)
-                    {
-                        if (i == 1)
-                            throw;
-                        else
-                            Logger.Warn($"{ex.GetType()} exception occurred - {ex}, retrying login");
-                    }
+                    driver.Login();
+                    Logger.Info("Logged in.");
+                    break;
                 }
-
-                // Allow driver to live during the connection check, for any delayed action by the login
-                if (Program.ConnectionCheck())
-                    HookRunner.RunHooks(network, HookType.PostLogin, Config.NetworkHook.OnlyWhen.Success);
-                else
+                catch (OpenQA.Selenium.WebDriverTimeoutException ex)
                 {
-                    var environment = new Dictionary<string, string>{
-                        { "ERROR", "Unable to verify connection after login" }
-                    };
-                    HookRunner.RunHooks(network, HookType.PostLogin, Config.NetworkHook.OnlyWhen.Failure, environment);
-                    HookRunner.RunHooks(network, HookType.Error, Config.NetworkHook.OnlyWhen.Always, environment);
-                    ExitCode = 1;
-                    return;
+                    if (i == 1)
+                        throw;
+                    else
+                        Logger.Warn($"{ex.GetType()} exception occurred - {ex}, retrying login");
                 }
+            }
+
+            // Allow driver to live during the connection check, for any delayed action by the login
+            if (Program.ConnectionCheck())
+                HookRunner.RunHooks(network, HookType.PostLogin, Config.NetworkHook.OnlyWhen.Success);
+            else
+            {
+                var environment = new Dictionary<string, string>{
+                    { "ERROR", "Unable to verify connection after login" }
+                };
+                HookRunner.RunHooks(network, HookType.PostLogin, Config.NetworkHook.OnlyWhen.Failure, environment);
+                HookRunner.RunHooks(network, HookType.Error, Config.NetworkHook.OnlyWhen.Always, environment);
+                ExitCode = 1;
+                return;
             }
 
         }
@@ -226,28 +212,26 @@ public class Program
     {
         try
         {
-            using(var driver = new WebDriver(network))
+            using var driver = new WebDriver(network);
+            var data = driver.ReadData();
+            if (data == null)
             {
-                var data = driver.ReadData();
-                if (data == null)
-                {
-                    Logger.Info("No data information for network, skipping.");
-                    return;
-                }
-
-                var environment = new Dictionary<string, string>();
-                if (data.IsInfinite)
-                    environment["DATA_INFINITE"] = "1";
-                else
-                {
-                    environment["DATA_AVAILABLE"] = data.GetAvailableMB().ToString();
-                    if (data.UsedMB.HasValue)
-                        environment["DATA_USED"] = data.UsedMB.Value.ToString();
-                    if (data.TotalMB.HasValue)
-                        environment["DATA_TOTAL"] = data.TotalMB.Value.ToString();
-                }
-                HookRunner.RunHooks(network, HookType.Data, Config.NetworkHook.OnlyWhen.Success);
+                Logger.Info("No data information for network, skipping.");
+                return;
             }
+
+            var environment = new Dictionary<string, string>();
+            if (data.IsInfinite)
+                environment["DATA_INFINITE"] = "1";
+            else
+            {
+                environment["DATA_AVAILABLE"] = data.GetAvailableMB().ToString();
+                if (data.UsedMB.HasValue)
+                    environment["DATA_USED"] = data.UsedMB.Value.ToString();
+                if (data.TotalMB.HasValue)
+                    environment["DATA_TOTAL"] = data.TotalMB.Value.ToString();
+            }
+            HookRunner.RunHooks(network, HookType.Data, Config.NetworkHook.OnlyWhen.Success);
         }
         catch (Exception ex)
         {
