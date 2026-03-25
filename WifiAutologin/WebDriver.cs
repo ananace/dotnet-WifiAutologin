@@ -62,32 +62,45 @@ public class WebDriver : IDisposable
 
         foreach (var action in Network.LoginActions)
         {
-            var begin = DateTime.Now;
-            Logger.Debug($"- {action.Action} {action.Element}");
-
-            OpenQA.Selenium.IWebElement? element = null;
-            if (action.Element != null)
-                element = FindElement(action, begin);
-
-            switch (action.Action)
+            try
             {
-            case Config.NetworkActionType.Click:
-            case Config.NetworkActionType.Input:
-            case Config.NetworkActionType.Submit:
-            case Config.NetworkActionType.Acquire:
-                if (element == null && !(action.Dialog ?? false))
-                    throw new Exception("Missing a web element for action");
-                else if (action.Dialog ?? false)
-                    ActOnPage(action, begin);
-                else if (element != null)
-                    ActOnElement(ref element, action, begin);
-                else
-                    throw new Exception("Element is null and dialog not triggered - this should never happen");
-                break;
+                var begin = DateTime.Now;
+                Logger.Debug($"- {action.Action} {action.Element}");
 
-            default:
-                ActOnPage(action, begin);
-                break;
+                OpenQA.Selenium.IWebElement? element = null;
+                if (action.Element != null)
+                    element = FindElement(action, begin);
+
+                switch (action.Action)
+                {
+                case Config.NetworkActionType.Click:
+                case Config.NetworkActionType.Input:
+                case Config.NetworkActionType.Submit:
+                case Config.NetworkActionType.Acquire:
+                    if (element == null && !(action.Dialog ?? false))
+                        throw new Exception("Missing a web element for action");
+                    else if (action.Dialog ?? false)
+                        ActOnPage(action, begin);
+                    else if (element != null)
+                        ActOnElement(ref element, action, begin);
+                    else
+                        throw new Exception("Element is null and dialog not triggered - this should never happen");
+                    break;
+
+                default:
+                    ActOnPage(action, begin);
+                    break;
+                }
+            }
+            catch (Exception ex)
+            {
+                if (action.Optional ?? false)
+                {
+                    Logger.Debug($"Received {ex} when attempting optional action {action}, skipping it.");
+                    continue;
+                }
+
+                throw ex;
             }
         }
 
@@ -199,8 +212,16 @@ public class WebDriver : IDisposable
     public void Dispose()
     {
         Logger.Debug("Disposing");
-        Driver.Quit();
-        Driver.Close();
+        try
+        {
+            var opts = Driver.Manage();
+            opts.Network.StopMonitoring();
+            Driver.Quit();
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex.ToString());
+        }
         Driver.Dispose();
     }
 

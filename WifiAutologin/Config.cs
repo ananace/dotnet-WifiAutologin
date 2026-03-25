@@ -150,6 +150,8 @@ public class Config
         public float? Sleep { get; set; }
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
         public float? Timeout { get; set; }
+        [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitNull)]
+        public bool? Optional { get; set; }
 
         public void LoadFromNode(YamlNode node)
         {
@@ -186,6 +188,8 @@ public class Config
 
                     if (mapping.Children.ContainsKey(new YamlScalarNode("dialog")))
                         Dialog = true; //mapping.Children[new YamlScalarNode("dialog")];
+                    if (mapping.Children.ContainsKey(new YamlScalarNode("optional")))
+                        Optional = true; //mapping.Children[new YamlScalarNode("dialog")];
 
                     if (mapping.Children.ContainsKey(new YamlScalarNode("script")))
                         Script = mapping.Children[new YamlScalarNode("script")].ToString();
